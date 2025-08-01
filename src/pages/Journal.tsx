@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useEffect } from 'react';
-import { Plus, Search, Calendar, Filter, Settings } from 'lucide-react';
+import { Plus, Search, Calendar, Filter } from 'lucide-react';
 import NewEntryModal from '../components/Journal/NewEntryModal';
 import ViewEntryModal from '../components/Journal/ViewEntryModal';
 import EditEntryModal from '../components/Journal/EditEntryModal';
@@ -89,57 +89,45 @@ const Journal = () => {
 
   return (
     <div className="bg-app transition-colors duration-200">
-      <div className="p-4">
-        {/* Settings Icon and Controls */}
-        <div className="w-full space-y-4">
-          <div className="flex justify-end">
-            <button 
-              onClick={() => navigate('/profile')}
-              className="p-2 text-app-muted hover:text-app hover:bg-app-light rounded-full transition-all duration-200 active:scale-95"
+      {/* Header */}
+      <div className="bg-app-light px-4 py-3 border-b border-app-muted sticky top-0 z-40 transition-colors duration-200">
+        <div className="w-full max-w-4xl mx-auto">
+          <div className="flex justify-between items-center mb-3 sm:mb-4">
+            <h1 className="text-xl font-bold text-app transition-colors duration-200">Journal</h1>
+            <button
+              onClick={() => setShowNewEntry(true)}
+              className="bg-primary hover:bg-primary/90 text-white p-2 rounded-full transition-all duration-200 active:scale-95 shadow-sm hover:shadow-md"
+              disabled={loading}
             >
-              <Settings size={20} />
+              <Plus size={20} />
             </button>
           </div>
           
-          {/* New Entry Button and Search/Filter Bar */}
-          <div className="max-w-4xl mx-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h1 className="text-xl font-bold text-app transition-colors duration-200">Journal</h1>
-              <button
-                onClick={() => setShowNewEntry(true)}
-                className="bg-primary hover:bg-primary/90 text-white p-2 rounded-full transition-all duration-200 active:scale-95 shadow-sm hover:shadow-md"
-                disabled={loading}
-              >
-                <Plus size={20} />
-              </button>
+          {/* Search and Filter Bar */}
+          <div className="flex gap-2">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-app-muted" size={16} />
+              <input
+                type="text"
+                placeholder="Search entries..."
+                className="w-full pl-9 pr-3 py-2 text-sm border border-app-muted bg-app-light text-app placeholder-app-muted rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+              />
             </div>
-            
-            {/* Search and Filter Bar */}
-            <div className="flex gap-2 mb-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-app-muted" size={16} />
-                <input
-                  type="text"
-                  placeholder="Search entries..."
-                  className="w-full pl-9 pr-3 py-2 text-sm border border-app-muted bg-app-light text-app placeholder-app-muted rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
-                />
-              </div>
-              <button className="p-2 border border-app-muted bg-app-light rounded-lg hover:bg-app-dark transition-all duration-200 active:scale-95">
-                <Calendar size={16} className="text-app-muted" />
-              </button>
-              <button className="p-2 border border-app-muted bg-app-light rounded-lg hover:bg-app-dark transition-all duration-200 active:scale-95 shadow-sm hover:shadow-md">
-                <Filter size={16} className="text-app-muted" />
-              </button>
-              <button className="p-2 border border-app-muted bg-app-light rounded-lg hover:bg-app-dark transition-all duration-200 active:scale-95 shadow-sm hover:shadow-md">
-                <Calendar size={16} className="text-app-muted" />
-              </button>
-            </div>
+            <button className="p-2 border border-app-muted bg-app-light rounded-lg hover:bg-app-dark transition-all duration-200 active:scale-95">
+              <Calendar size={16} className="text-app-muted" />
+            </button>
+            <button className="p-2 border border-app-muted bg-app-light rounded-lg hover:bg-app-dark transition-all duration-200 active:scale-95 shadow-sm hover:shadow-md">
+              <Filter size={16} className="text-app-muted" />
+            </button>
+            <button className="p-2 border border-app-muted bg-app-light rounded-lg hover:bg-app-dark transition-all duration-200 active:scale-95 shadow-sm hover:shadow-md">
+              <Calendar size={16} className="text-app-muted" />
+            </button>
           </div>
         </div>
       </div>
 
       {/* Journal Entries */}
-      <div className="px-4 pb-4">
+      <div className="p-4">
         <div className="w-full space-y-3">
           {loading && (
             <div className="text-center py-8">

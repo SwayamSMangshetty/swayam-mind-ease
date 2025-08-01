@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Play, Settings } from 'lucide-react';
+import { ArrowLeft, Play } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -124,18 +124,14 @@ const Meditate = () => {
 
   return (
     <div className="bg-app min-h-screen transition-colors duration-200">
+      {/* Header */}
+      <div className="bg-app-light px-4 sm:px-6 py-3 sm:py-4 border-b border-app-muted sticky top-0 z-40 transition-colors duration-200">
+        <div className="w-full">
+          <h1 className="text-lg sm:text-xl font-semibold text-app transition-colors duration-200 text-center">Meditations</h1>
+        </div>
+      </div>
 
       <div className="p-4 sm:p-6 pb-20">
-        {/* Settings Icon */}
-        <div className="flex justify-end mb-4">
-          <button 
-            onClick={() => navigate('/profile')}
-            className="p-2 text-app-muted hover:text-app hover:bg-app-light rounded-full transition-all duration-200 active:scale-95"
-          >
-            <Settings size={20} />
-          </button>
-        </div>
-        
         <div className="w-full space-y-6 sm:space-y-8 max-w-7xl mx-auto">
           {loading && (
             <div className="text-center py-8">

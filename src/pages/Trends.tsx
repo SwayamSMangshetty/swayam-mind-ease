@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useEffect } from 'react';
-import { ArrowLeft, Smile, Sun, Cloud, Settings } from 'lucide-react';
+import { ArrowLeft, Smile, Sun, Cloud } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -166,24 +166,15 @@ const Trends = () => {
 
   return (
     <div className="bg-app transition-colors duration-200 min-h-screen">
+      {/* Header */}
+      <div className="bg-app-light px-4 py-3 border-b border-app-muted sticky top-0 z-40 transition-colors duration-200">
+        <div className="w-full">
+          <h1 className="text-lg font-semibold text-app transition-colors duration-200 text-center">Mood Trends</h1>
+        </div>
+      </div>
 
       <div className="px-4 py-4">
-        {/* Settings Icon */}
-        <div className="flex justify-end mb-4">
-          <button 
-            onClick={() => navigate('/profile')}
-            className="p-2 text-app-muted hover:text-app hover:bg-app-light rounded-full transition-all duration-200 active:scale-95"
-          >
-            <Settings size={20} />
-          </button>
-        </div>
-        
         <div className="max-w-4xl mx-auto space-y-6">
-          {/* Page Title */}
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-app transition-colors duration-200">Mood Trends</h1>
-          </div>
-          
           {/* Loading */}
           {loading && (
             <div className="text-center py-8">
