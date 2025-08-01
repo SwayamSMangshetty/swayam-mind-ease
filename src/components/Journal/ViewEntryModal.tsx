@@ -42,8 +42,9 @@ const ViewEntryModal: React.FC<ViewEntryModalProps> = ({ entry, onClose, onEdit 
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-app-light rounded-2xl w-full max-w-2xl max-h-[calc(100vh-6rem)] flex flex-col mx-4 transition-colors duration-200 shadow-xl">
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50">
+      <div className="flex items-center justify-center min-h-full p-4 pb-20 sm:pb-4">
+        <div className="bg-app-light rounded-2xl w-full max-w-2xl max-h-[calc(100vh-8rem)] sm:max-h-[calc(100vh-4rem)] flex flex-col transition-colors duration-200 shadow-xl my-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-4 sm:p-6 border-b border-app-muted">
           <div className="flex items-center gap-3">
@@ -108,6 +109,7 @@ const ViewEntryModal: React.FC<ViewEntryModalProps> = ({ entry, onClose, onEdit 
             )}
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
