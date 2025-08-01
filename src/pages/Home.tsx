@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Smile, Frown, Meh, Angry, BookOpen, MessageCircle, BarChart3 } from 'lucide-react';
+import { Smile, Frown, Meh, Angry, BookOpen, MessageCircle, BarChart3, Settings } from 'lucide-react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { MoodEntry } from '../types';
@@ -125,6 +125,16 @@ const Home = () => {
 
   return (
     <div className="bg-app py-4 px-4 transition-colors duration-200">
+      {/* Settings Icon */}
+      <div className="flex justify-end mb-4">
+        <button 
+          onClick={() => navigate('/profile')}
+          className="p-2 text-app-muted hover:text-app hover:bg-app-light rounded-full transition-all duration-200 active:scale-95"
+        >
+          <Settings size={20} />
+        </button>
+      </div>
+      
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Greeting */}
         <div className="text-center">

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowLeft, Send, Image } from 'lucide-react';
+import { ArrowLeft, Send, Image, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import { supabase } from '../lib/supabase';
@@ -162,22 +162,21 @@ const Chat = () => {
 
   return (
     <div className="bg-app flex flex-col transition-colors duration-200 min-h-screen">
-      {/* Header */}
-      <div className="bg-app-light px-4 py-3 border-b border-app-muted sticky top-0 z-40 transition-colors duration-200">
-        <div className="w-full flex items-center">
-          <h1 className="text-lg font-semibold text-app transition-colors duration-200 text-center w-full">MindEase</h1>
-        </div>
-      </div>
 
-      {/* Bot Info */}
-      <div className="bg-app-light px-4 py-2 border-b border-app-muted transition-colors duration-200">
-        <div className="w-full">
-          <p className="text-xs text-app-muted text-center transition-colors duration-200">MindEase Bot</p>
+      {/* Settings Icon */}
+      <div className="px-4 pt-4 pb-2">
+        <div className="flex justify-end">
+          <button 
+            onClick={() => navigate('/profile')}
+            className="p-2 text-app-muted hover:text-app hover:bg-app-light rounded-full transition-all duration-200 active:scale-95"
+          >
+            <Settings size={20} />
+          </button>
         </div>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-3 pb-32">
+      <div className="flex-1 overflow-y-auto px-4 pb-32">
         <div className="max-w-4xl mx-auto space-y-3">
           {loading && (
             <div className="text-center py-8">
