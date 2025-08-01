@@ -128,16 +128,7 @@ const Home = () => {
       {/* Header */}
       <div className="bg-app-light px-4 py-3 border-b border-app-muted sticky top-0 z-40 transition-colors duration-200 mb-4">
         <div className="flex justify-between items-center w-full">
-          {/* Logo */}
-          <div className="flex items-center">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-primary/10 rounded-full flex items-center justify-center transition-colors duration-200">
-              <div className="w-4 h-4 sm:w-5 sm:h-5 bg-primary rounded-full flex items-center justify-center">
-                <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-white rounded-full"></div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Centered Title */}
+          {/* Left aligned title */}
           <h1 className="text-xl sm:text-2xl font-bold text-app transition-colors duration-200">MindEase</h1>
           
           {/* Settings Button */}
