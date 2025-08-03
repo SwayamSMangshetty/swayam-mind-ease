@@ -126,8 +126,8 @@ const Home = () => {
   return (
     <div className="bg-app py-4 px-4 transition-colors duration-200">
       {/* Header */}
-      <div className="bg-app-light px-4 py-3 border-b border-app-muted sticky top-0 z-40 transition-colors duration-200 mb-4">
-        <div className="flex justify-between items-center w-full">
+      <div className="bg-app-light py-3 border-b border-app-muted sticky top-0 z-40 transition-colors duration-200 mb-4">
+        <div className="flex justify-between items-center w-full px-4">
           {/* Left aligned title */}
           <h1 className="text-xl sm:text-2xl font-bold text-app transition-colors duration-200">MindEase</h1>
           
