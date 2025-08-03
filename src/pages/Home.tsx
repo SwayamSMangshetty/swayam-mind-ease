@@ -124,14 +124,11 @@ const Home = () => {
   };
 
   return (
-    <div className="bg-app py-4 px-4 transition-colors duration-200">
-      {/* Header */}
-      <div className="bg-app-light py-3 border-b border-app-muted sticky top-0 z-40 transition-colors duration-200 mb-4">
-        <div className="flex justify-between items-center w-full px-4">
-          {/* Left aligned title */}
+    <div className="bg-app transition-colors duration-200">
+      {/* Header - Full Width */}
+      <div className="bg-app-light py-4 border-b border-app-muted sticky top-0 z-40 transition-colors duration-200">
+        <div className="flex justify-between items-center px-4">
           <h1 className="text-xl sm:text-2xl font-bold text-app transition-colors duration-200">MindEase</h1>
-          
-          {/* Settings Button */}
           <button 
             onClick={() => navigate('/profile')}
             className="p-2 text-app-muted hover:text-app hover:bg-app-dark rounded-full transition-all duration-200 active:scale-95"
@@ -141,7 +138,9 @@ const Home = () => {
         </div>
       </div>
       
-      <div className="max-w-7xl mx-auto space-y-6">
+      {/* Content with padding */}
+      <div className="px-4 py-4">
+        <div className="max-w-7xl mx-auto space-y-6">
         {/* Greeting */}
         <div className="text-center">
           <h1 className="text-2xl sm:text-3xl font-bold text-app mb-2 transition-colors duration-200">Hello there</h1>
