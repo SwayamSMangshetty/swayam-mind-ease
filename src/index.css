@@ -4,39 +4,39 @@
 
 :root {
   /* Light mode colors */
-  /* Light mode colors - MindEase Brand Palette */
+  /* MindEase Brand Guidelines - Light Mode */
   --bg-dark: #F0F2F5;
   --bg: #F7F8FA;
   --bg-light: #FFFFFF;
-  --text: #111827;
-  --text-muted: #6B7280;
+  --text: #2D3748;
+  --text-muted: #5C5F66;
   --highlight: #C9B6E4;
-  --border: #D1D5DB;
+  --border: #E5E7EB;
   --border-muted: #E5E7EB;
   --primary: #C9B6E4;
   --secondary: #A9D6E5;
-  --danger: #EF4444;
-  --warning: #F59E0B;
+  --danger: #E53E3E;
+  --warning: #DD6B20;
   --success: #B8E0D2;
-  --info: #3B82F6;
+  --info: #3182CE;
 }
 
 .dark {
-  /* Dark mode colors - MindEase Brand Palette */
-  --bg-dark: #111827;
-  --bg: #1F2937;
-  --bg-light: #374151;
+  /* MindEase Brand Guidelines - Dark Mode */
+  --bg-dark: #1B1C22;
+  --bg: #2E2E3A;
+  --bg-light: #3A3B47;
   --text: #F9FAFB;
-  --text-muted: #D1D5DB;
+  --text-muted: #A0AEC0;
   --highlight: #A18EC1;
-  --border: #4B5563;
-  --border-muted: #374151;
+  --border: #4A5568;
+  --border-muted: #2D3748;
   --primary: #A18EC1;
   --secondary: #7FB7C9;
-  --danger: #F87171;
-  --warning: #FBBF24;
+  --danger: #FC8181;
+  --warning: #F6AD55;
   --success: #8FBFAF;
-  --info: #60A5FA;
+  --info: #63B3ED;
 }
 
 @layer utilities {
