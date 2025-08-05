@@ -173,14 +173,14 @@ const Chat = () => {
       <div className="flex-1 overflow-y-auto px-4 py-3 pb-32 pt-4">
         <div className="max-w-4xl mx-auto space-y-3">
           {loading && (
-            <div className="text-center py-8">
+            <div className="text-center py-8 bg-app-light rounded-lg border border-app-muted mx-auto max-w-md p-6">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
               <p className="text-app-muted mt-2">Loading messages...</p>
             </div>
           )}
 
           {error && (
-            <div className="bg-danger/10 border border-danger rounded-lg p-4 mb-4">
+            <div className="bg-danger/10 border border-danger rounded-lg p-4 mb-4 mx-auto max-w-md">
               <p className="text-danger text-sm">{error}</p>
             </div>
           )}

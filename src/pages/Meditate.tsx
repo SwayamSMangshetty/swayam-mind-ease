@@ -134,14 +134,14 @@ const Meditate = () => {
       <div className="p-4 sm:p-6 pb-20">
         <div className="w-full space-y-6 sm:space-y-8 max-w-7xl mx-auto">
           {loading && (
-            <div className="text-center py-8">
+            <div className="text-center py-8 bg-app-light rounded-lg border border-app-muted mx-auto max-w-md p-6">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
               <p className="text-app-muted mt-2">Loading meditations...</p>
             </div>
           )}
 
           {error && (
-            <div className="bg-danger/10 border border-danger rounded-lg p-4">
+            <div className="bg-danger/10 border border-danger rounded-lg p-4 mx-auto max-w-md">
               <p className="text-danger text-sm">{error}</p>
             </div>
           )}
@@ -175,7 +175,8 @@ const Meditate = () => {
           {/* Empty State */}
           {!loading && meditationGuides.length === 0 && (
             <div className="flex flex-col items-center justify-center py-16 px-6 min-h-[50vh]">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-6">
+              <div className="bg-app-light rounded-2xl p-8 border border-app-muted shadow-sm max-w-md mx-auto text-center">
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-6 mx-auto">
                 <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
                   <div className="w-4 h-4 bg-primary rounded-full"></div>
                 </div>
@@ -198,6 +199,7 @@ const Meditate = () => {
                 >
                   Go Back
                 </button>
+                </div>
               </div>
             </div>
           )}

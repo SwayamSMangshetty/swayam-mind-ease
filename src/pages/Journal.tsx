@@ -132,14 +132,14 @@ const Journal = () => {
       <div className="p-4">
         <div className="w-full space-y-3">
           {loading && (
-            <div className="text-center py-8">
+            <div className="text-center py-8 bg-app-light rounded-lg border border-app-muted mx-auto max-w-md">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
               <p className="text-app-muted mt-2">Loading entries...</p>
             </div>
           )}
 
           {error && (
-            <div className="bg-danger/10 border border-danger rounded-lg p-4">
+            <div className="bg-danger/10 border border-danger rounded-lg p-4 mx-auto max-w-md">
               <p className="text-danger text-sm">{error}</p>
             </div>
           )}
@@ -171,7 +171,8 @@ const Journal = () => {
       {/* Empty State (when no entries) */}
       {journalEntries.length === 0 && !loading && (
         <div className="flex flex-col items-center justify-center py-16 px-6">
-          <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4 transition-colors duration-200">
+          <div className="bg-app-light rounded-2xl p-8 border border-app-muted shadow-sm max-w-md mx-auto text-center">
+            <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4 mx-auto transition-colors duration-200">
             <Plus size={20} className="text-primary" />
           </div>
           <h3 className="text-lg font-semibold text-app mb-2 transition-colors duration-200">Start Your Journal</h3>
@@ -184,6 +185,7 @@ const Journal = () => {
           >
             Write First Entry
           </button>
+          </div>
         </div>
       )}
 

@@ -177,7 +177,7 @@ const Trends = () => {
         <div className="max-w-4xl mx-auto space-y-6">
           {/* Loading */}
           {loading && (
-            <div className="text-center py-8">
+            <div className="text-center py-8 bg-app-light rounded-lg border border-app-muted mx-auto max-w-md p-6">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
               <p className="text-app-muted mt-2">Loading mood trends...</p>
             </div>
@@ -185,7 +185,7 @@ const Trends = () => {
           
           {/* Error */}
           {error && (
-            <div className="bg-danger/10 border border-danger rounded-lg p-4">
+            <div className="bg-danger/10 border border-danger rounded-lg p-4 mx-auto max-w-md">
               <p className="text-danger text-sm">{error}</p>
             </div>
           )}
@@ -337,14 +337,14 @@ const Trends = () => {
           
           {/* Empty State */}
           {!loading && moodData.length === 0 && (
-            <div className="text-center py-8">
+            <div className="text-center py-8 bg-app-light rounded-lg border border-app-muted mx-auto max-w-md p-6">
               <p className="text-app-muted">No mood data available for this period.</p>
             </div>
           )}
           
           {/* No Data Available */}
           {!loading && validMoodData.length === 0 && moodData.length > 0 && (
-            <div className="text-center py-8">
+            <div className="text-center py-8 bg-app-light rounded-lg border border-app-muted mx-auto max-w-md p-6">
               <p className="text-app-muted">No mood entries found for this period. Start tracking your mood to see trends!</p>
             </div>
           )}
