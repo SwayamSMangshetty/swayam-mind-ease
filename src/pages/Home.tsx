@@ -137,58 +137,27 @@ const Home = () => {
   return (
     <div className="bg-app transition-colors duration-200">
       {/* Header - Full Width */}
-      <header className="bg-gradient-to-r from-purple-100 via-blue-50 to-indigo-100 dark:from-purple-900/20 dark:via-blue-900/10 dark:to-indigo-900/20 py-6 sticky top-0 z-40 transition-all duration-200 shadow-sm border-b border-white/20 dark:border-gray-700/30">
-        {/* Subtle Background Pattern */}
-        <div className="absolute inset-0 overflow-hidden">
-          <svg className="absolute top-0 right-0 w-32 h-32 opacity-10 dark:opacity-5" viewBox="0 0 100 100">
-            <circle cx="50" cy="20" r="20" fill="currentColor" className="text-purple-400"/>
-            <path d="M30 60 Q50 40 70 60 Q50 80 30 60" fill="currentColor" className="text-blue-400"/>
-          </svg>
+      <div className="bg-app-light py-4 border-b border-app-muted sticky top-0 z-40 transition-colors duration-200">
+        <div className="flex justify-between items-center px-4">
+          <h1 className="text-xl sm:text-2xl font-bold text-app transition-colors duration-200">MindEase</h1>
+          <button 
+            onClick={() => navigate('/profile')}
+            className="p-2 text-app-muted hover:text-app hover:bg-app-dark rounded-full transition-all duration-200 active:scale-95"
+          >
+            <Settings size={20} />
+          </button>
         </div>
-        
-        <div className="relative px-4 max-w-7xl mx-auto">
-          {/* Top Row: Logo/Name and Settings */}
-          <div className="flex justify-between items-center mb-4">
-            {/* Logo & App Name */}
-            <div className="flex items-center gap-3">
-              {/* App Icon */}
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center shadow-lg">
-                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2C7.58 2 4 5.58 4 10c0 5.25 6 11 8 11s8-5.75 8-11c0-4.42-3.58-8-8-8zm0 2c3.31 0 6 2.69 6 6 0 2.97-3.54 6.86-6 9.47C9.54 16.86 6 12.97 6 10c0-3.31 2.69-6 6-6z"/>
-                  <circle cx="12" cy="10" r="3"/>
-                </svg>
-              </div>
-              
-              {/* App Name */}
-              <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent transition-all duration-200">
-                MindEase
-              </h1>
-            </div>
-            
-            {/* Settings Button */}
-            <button 
-              onClick={() => navigate('/profile')}
-              className="p-3 bg-white/70 dark:bg-gray-800/70 hover:bg-white dark:hover:bg-gray-700 rounded-full transition-all duration-200 active:scale-95 shadow-md hover:shadow-lg backdrop-blur-sm border border-white/50 dark:border-gray-600/50"
-            >
-              <Settings size={20} className="text-gray-600 dark:text-gray-300" />
-            </button>
-          </div>
-          
-          {/* Greeting Section */}
-          <div className="text-center sm:text-left">
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2 transition-colors duration-200">
-              👋 Hey {user?.user_metadata?.name?.split(' ')[0] || 'there'},
-            </h2>
-            <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-400 font-medium transition-colors duration-200">
-              How are you feeling today?
-            </p>
-          </div>
-        </div>
-      </header>
+      </div>
       
       {/* Content with padding */}
       <div className="px-4 py-4">
         <div className="max-w-7xl mx-auto space-y-6">
+        {/* Greeting */}
+        <div className="text-center">
+          <h1 className="text-2xl sm:text-3xl font-bold text-app mb-2 transition-colors duration-200">Hello there</h1>
+          <p className="text-base sm:text-lg text-app-muted transition-colors duration-200">How are you feeling today?</p>
+        </div>
+
         {/* Mood Selection */}
         <div>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4 max-w-4xl mx-auto">
