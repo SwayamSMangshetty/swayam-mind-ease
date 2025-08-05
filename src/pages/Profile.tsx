@@ -1,17 +1,54 @@
 import React, { useState } from 'react';
-import { ArrowLeft, ChevronRight, ChevronDown, User, Bell, Info, Palette, LogOut } from 'lucide-react';
+import { ArrowLeft, ChevronRight, ChevronDown, User, Bell, Info, Palette, LogOut, Edit } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
+import EditProfileModal from '../components/Profile/EditProfileModal';
 
 const Profile = () => {
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
   const { user, signOut } = useAuth();
-  const { showInfo, showSuccess } = useToast();
+  const { showInfo, showSuccess, showError } = useToast();
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [showThemeDropdown, setShowThemeDropdown] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [profileData, setProfileData] = useState({
+    name: user?.user_metadata?.name || '',
+    email: user?.email || '',
+    bio: '',
+    avatar_url: ''
+  });
+
+  // Load profile data on component mount
+  React.useEffect(() => {
+    const loadProfileData = async () => {
+      if (!user) return;
+      
+      try {
+        const { supabase } = await import('../lib/supabase');
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        
+        if (data) {
+          setProfileData({
+            name: data.name || user?.user_metadata?.name || '',
+            email: data.email || user?.email || '',
+            bio: data.bio || '',
+            avatar_url: data.avatar_url || ''
+          });
+        }
+      } catch (err) {
+        console.error('Error loading profile:', err);
+      }
+    };
+    
+    loadProfileData();
+  }, [user]);
 
   const handleNotificationToggle = () => {
     setNotificationsEnabled(!notificationsEnabled);
@@ -30,10 +67,12 @@ const Profile = () => {
   };
 
   const handleProfileEdit = () => {
-    showInfo(
-      'Coming Soon',
-      'Profile editing features will be available in the next update.'
-    );
+    setShowEditModal(true);
+  };
+
+  const handleProfileSave = () => {
+    // Reload profile data after save
+    window.location.reload();
   };
 
   const handleThemeSelect = (selectedTheme: 'light' | 'dark') => {
@@ -70,25 +109,72 @@ const Profile = () => {
         <div className="w-full space-y-6 max-w-4xl mx-auto">
           {/* Profile Section */}
           <div className="flex flex-col items-center">
-            <button
-              onClick={handleProfileEdit}
-              className="relative mb-4 hover:scale-105 transition-transform active:scale-95 rounded-full"
-            >
+            <div className="relative mb-4">
               <div className="w-24 h-24 rounded-full overflow-hidden bg-secondary/20 shadow-lg transition-colors duration-200">
-                <div className="w-full h-full flex items-center justify-center">
-                  <User size={48} className="text-secondary" />
-                </div>
+                {profileData.avatar_url ? (
+                  <img 
+                    src={profileData.avatar_url} 
+                    alt="Profile" 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <User size={48} className="text-secondary" />
+                  </div>
+                )}
               </div>
-            </button>
+              <button
+                onClick={handleProfileEdit}
+                className="absolute bottom-0 right-0 w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-lg hover:bg-primary/90 transition-all duration-200 active:scale-95"
+              >
+                <Edit size={14} className="text-white" />
+              </button>
+            </div>
             
+            <div className="text-center max-w-sm">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <h2 className="text-xl font-bold text-app transition-colors duration-200">
+                  {profileData.name || 'User'}
+                </h2>
+                <button
+                  onClick={handleProfileEdit}
+                  className="p-1 hover:bg-app-dark rounded-full transition-all duration-200 active:scale-95"
+                >
+                  <Edit size={16} className="text-app-muted" />
+                </button>
+              </div>
+              <p className="text-sm text-app-muted transition-colors duration-200 mb-2">
+                {profileData.email}
+              </p>
+              {profileData.bio && (
+                <p className="text-sm text-app-muted transition-colors duration-200 leading-relaxed">
+                  {profileData.bio}
+                </p>
+              )}
+              {!profileData.bio && (
+                <button
+                  onClick={handleProfileEdit}
+                  className="text-sm text-primary hover:text-primary/80 transition-colors duration-200"
+                >
+                  Add a bio
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Edit Profile Button */}
+          <div>
             <button
               onClick={handleProfileEdit}
-              className="text-center hover:bg-app-dark rounded-lg p-2 transition-all duration-200 active:scale-[0.98]"
+              className="w-full flex items-center justify-between p-4 bg-app-light rounded-xl border border-app-muted hover:border-primary/50 hover:shadow-md transition-all duration-200 active:scale-[0.98] shadow-sm"
             >
-              <h2 className="text-xl font-bold text-app mb-1 transition-colors duration-200">
-                {user?.user_metadata?.name || 'User'}
-              </h2>
-              <p className="text-sm text-app-muted transition-colors duration-200">{user?.email}</p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center transition-colors duration-200">
+                  <Edit size={18} className="text-primary" />
+                </div>
+                <span className="text-app font-medium text-sm transition-colors duration-200">Edit Profile</span>
+              </div>
+              <ChevronRight size={18} className="text-app-muted" />
             </button>
           </div>
 
@@ -208,6 +294,14 @@ const Profile = () => {
         <div 
           className="fixed inset-0 z-40" 
           onClick={() => setShowThemeDropdown(false)}
+        />
+      )}
+
+      {/* Edit Profile Modal */}
+      {showEditModal && (
+        <EditProfileModal
+          onClose={() => setShowEditModal(false)}
+          onSave={handleProfileSave}
         />
       )}
     </div>
