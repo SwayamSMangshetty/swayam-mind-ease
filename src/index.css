@@ -8,11 +8,11 @@
   --bg-dark: #F0F2F5;
   --bg: #F7F8FA;
   --bg-light: #FFFFFF;
-  --text: #5C5F66;
-  --text-muted: #9CA3AF;
+  --text: #111827;
+  --text-muted: #6B7280;
   --highlight: #C9B6E4;
-  --border: #E5E7EB;
-  --border-muted: #F3F4F6;
+  --border: #D1D5DB;
+  --border-muted: #E5E7EB;
   --primary: #C9B6E4;
   --secondary: #A9D6E5;
   --danger: #EF4444;
@@ -23,9 +23,9 @@
 
 .dark {
   /* Dark mode colors - MindEase Brand Palette */
-  --bg-dark: #1B1C22;
-  --bg: #2E2E3A;
-  --bg-light: #3A3B47;
+  --bg-dark: #111827;
+  --bg: #1F2937;
+  --bg-light: #374151;
   --text: #F9FAFB;
   --text-muted: #D1D5DB;
   --highlight: #A18EC1;
