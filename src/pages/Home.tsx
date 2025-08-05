@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Smile, Frown, Meh, Angry, BookOpen, MessageCircle, BarChart3, Settings, Heart } from 'lucide-react';
+import { Smile, Frown, Meh, Angry, BookOpen, MessageCircle, BarChart3, Settings } from 'lucide-react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { MoodEntry } from '../types';
@@ -125,172 +125,130 @@ const Home = () => {
 
   return (
     <div className="bg-app transition-colors duration-200">
-      {/* Enhanced Header with Gradient Background */}
-      <div className="relative bg-gradient-to-br from-primary/5 via-secondary/10 to-primary/5 border-b border-app-muted sticky top-0 z-40 transition-colors duration-200 overflow-hidden">
-        {/* Subtle Background Pattern */}
-        <div className="absolute inset-0 opacity-30">
-          <div className="absolute top-0 left-1/4 w-32 h-32 bg-primary/5 rounded-full blur-3xl"></div>
-          <div className="absolute top-0 right-1/3 w-24 h-24 bg-secondary/5 rounded-full blur-2xl"></div>
-        </div>
-        
-        <div className="relative px-4 py-5">
-          {/* Top Row: Logo + Name and Settings */}
-          <div className="flex justify-between items-center mb-4">
-            <div className="flex items-center gap-3">
-              {/* MindEase Logo */}
-              <div className="w-8 h-8 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center shadow-sm">
-                <Heart size={18} className="text-white" />
-              </div>
-              <h1 className="text-xl sm:text-2xl font-bold text-app transition-colors duration-200">MindEase</h1>
-            </div>
-            
-            {/* Enhanced Settings Button */}
-            <button 
-              onClick={() => navigate('/profile')}
-              className="p-2.5 bg-app-light/80 backdrop-blur-sm text-app-muted hover:text-app hover:bg-app-light border border-app-muted/50 rounded-full transition-all duration-200 active:scale-95 shadow-sm hover:shadow-md"
-            >
-              <Settings size={20} />
-            </button>
-          </div>
-          
-          {/* Personalized Greeting */}
-          <div className="text-center mb-6">
-            <h2 className="text-2xl sm:text-3xl font-bold text-app mb-2 transition-colors duration-200">
-              👋 Hey {user?.user_metadata?.name?.split(' ')[0] || 'there'}
-            </h2>
-            <p className="text-base sm:text-lg text-app-muted font-medium transition-colors duration-200">How are you feeling today?</p>
-          </div>
-
-          {/* Mood Selection - Integrated into Header */}
-          <div className="bg-app-light/60 backdrop-blur-sm rounded-2xl p-4 border border-app-muted/30 shadow-sm">
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4 max-w-2xl mx-auto">
-              {moodOptions.map((mood) => {
-                const Icon = mood.icon;
-                return (
-                  <button
-                    key={mood.value}
-                    onClick={() => handleMoodSelect(mood.value)}
-                    className="flex items-center gap-2 p-3 bg-app-light/80 backdrop-blur-sm rounded-xl border border-app-muted/50 hover:border-primary hover:shadow-md transition-all duration-200 active:scale-[0.98] disabled:opacity-50 shadow-sm hover:bg-primary/5"
-                    disabled={savingMood}
-                  >
-                    <Icon size={20} className={`${mood.color} flex-shrink-0`} />
-                    <span className="text-app font-medium text-sm truncate transition-colors duration-200">
-                      {savingMood ? 'Saving...' : mood.label}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+      {/* Header - Full Width */}
+      <div className="bg-app-light py-4 border-b border-app-muted sticky top-0 z-40 transition-colors duration-200">
+        <div className="flex justify-between items-center px-4">
+          <h1 className="text-xl sm:text-2xl font-bold text-app transition-colors duration-200">MindEase</h1>
+          <button 
+            onClick={() => navigate('/profile')}
+            className="p-2 text-app-muted hover:text-app hover:bg-app-dark rounded-full transition-all duration-200 active:scale-95"
+          >
+            <Settings size={20} />
+          </button>
         </div>
       </div>
       
-      {/* Content with reduced top padding */}
-      <div className="px-4 py-6">
+      {/* Content with padding */}
+      <div className="px-4 py-4">
         <div className="max-w-7xl mx-auto space-y-6">
-          {/* Mini Mood Graph */}
-          <div>
-            <div 
-              className="bg-app-light rounded-xl p-5 border border-app-muted cursor-pointer hover:border-primary hover:shadow-lg transition-all duration-200 active:scale-[0.99] shadow-sm hover:bg-primary/5 max-w-4xl mx-auto"
-              onClick={() => navigate('/trends')}
-            >
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-app transition-colors duration-200">Recent Mood Trends</h3>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-app-muted transition-colors duration-200">Last 7 days</span>
-                  {loading && (
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
-                  )}
-                </div>
-              </div>
-              
-              {/* SVG Chart - Enhanced */}
-              {moodData.length > 0 && (
-              <div className="relative w-full">
-                <div className="w-full overflow-hidden bg-gradient-to-r from-primary/5 to-secondary/5 rounded-lg p-4">
-                  <svg 
-                    viewBox="0 0 320 60" 
-                    className="w-full h-14 sm:h-16"
-                    preserveAspectRatio="none"
-                  >
-                    {/* Enhanced filled area */}
-                    <path
-                      d={generateFilledPath(moodData, 320, 60)}
-                      fill="url(#moodGradient)"
-                      fillOpacity="0.3"
-                      stroke="none"
-                    />
-                    {/* Enhanced line */}
-                    <path
-                      d={generatePath(moodData, 320, 60)}
-                      fill="none"
-                      stroke="var(--primary)"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      filter="drop-shadow(0 2px 4px rgba(124, 58, 237, 0.2))"
-                    />
-                    
-                    {/* Gradient definition */}
-                    <defs>
-                      <linearGradient id="moodGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.4"/>
-                        <stop offset="100%" stopColor="var(--secondary)" stopOpacity="0.1"/>
-                      </linearGradient>
-                    </defs>
-                  </svg>
-                </div>
-                
-                {/* Day labels */}
-                <div className="flex justify-between mt-3 px-1">
-                  {moodData.map((data, index) => (
-                    <span key={index} className="text-xs font-medium text-app-muted flex-1 text-center transition-colors duration-200">
-                      {data.day}
-                    </span>
-                  ))}
-                </div>
-              </div>
-              )}
-              
-              {moodData.length === 0 && !loading && (
-                <div className="text-center py-6 bg-gradient-to-r from-primary/5 to-secondary/5 rounded-lg">
-                  <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-3 mx-auto">
-                    <BarChart3 size={20} className="text-primary" />
-                  </div>
-                  <p className="text-app-muted text-sm font-medium">Start tracking your mood to see beautiful trends!</p>
-                </div>
-              )}
-            </div>
-          </div>
+        {/* Greeting */}
+        <div className="text-center">
+          <h1 className="text-2xl sm:text-3xl font-bold text-app mb-2 transition-colors duration-200">Hello there</h1>
+          <p className="text-base sm:text-lg text-app-muted transition-colors duration-200">How are you feeling today?</p>
+        </div>
 
-          {/* Enhanced Quick Actions */}
-          <div>
-            <h2 className="text-xl font-bold text-app mb-5 text-center transition-colors duration-200">Quick Actions</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
-              {quickActions.map((action) => {
-                const Icon = action.icon;
-                return (
-                  <button
-                    key={action.path}
-                    onClick={() => navigate(action.path)}
-                    className="group flex items-center gap-4 p-5 bg-app-light rounded-xl border border-app-muted hover:border-primary hover:shadow-lg transition-all duration-200 active:scale-[0.98] shadow-sm hover:bg-primary/5"
-                  >
-                    <div className="w-12 h-12 bg-gradient-to-br from-primary/10 to-secondary/10 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-                      <Icon size={20} className="text-primary" />
-                    </div>
-                    <div className="text-left">
-                      <span className="text-app font-semibold text-base block transition-colors duration-200">{action.label}</span>
-                      <span className="text-app-muted text-sm">
-                        {action.label === 'Journal' && 'Capture your thoughts'}
-                        {action.label === 'Chat' && 'Talk with MindEase AI'}
-                        {action.label === 'Progress' && 'View your trends'}
-                      </span>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+        {/* Mood Selection */}
+        <div>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4 max-w-4xl mx-auto">
+            {moodOptions.map((mood) => {
+              const Icon = mood.icon;
+              return (
+                <button
+                  key={mood.value}
+                  onClick={() => handleMoodSelect(mood.value)}
+                  className="flex items-center gap-2 p-3 bg-app-light rounded-lg border border-app-muted hover:border-primary hover:shadow-md transition-all duration-200 active:scale-[0.98] disabled:opacity-50 shadow-sm hover:bg-primary/10"
+                  disabled={savingMood}
+                >
+                  <Icon size={20} className={`${mood.color} flex-shrink-0`} />
+                  <span className="text-app font-medium text-sm truncate transition-colors duration-200">
+                    {savingMood ? 'Saving...' : mood.label}
+                  </span>
+                </button>
+              );
+            })}
           </div>
+        </div>
+
+        {/* Mini Mood Graph */}
+        <div>
+          <div 
+            className="bg-app-light rounded-lg p-4 border border-app-muted cursor-pointer hover:border-primary hover:shadow-md transition-all duration-200 active:scale-[0.98] shadow-sm hover:bg-primary/10 max-w-4xl mx-auto"
+            onClick={() => navigate('/trends')}
+          >
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="text-base font-semibold text-app transition-colors duration-200">Recent Mood Trends</h3>
+              <span className="text-xs text-app-muted transition-colors duration-200">Last 7 days</span>
+              {loading && (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+              )}
+            </div>
+            
+            {/* SVG Chart - Responsive */}
+            {moodData.length > 0 && (
+            <div className="relative w-full">
+              <div className="w-full overflow-hidden">
+                <svg 
+                  viewBox="0 0 320 60" 
+                  className="w-full h-12 sm:h-16"
+                  preserveAspectRatio="none"
+                >
+                  {/* Filled area */}
+                  <path
+                    d={generateFilledPath(moodData, 320, 60)}
+                    fill="var(--primary)"
+                    fillOpacity="0.1"
+                    stroke="none"
+                  />
+                  {/* Line */}
+                  <path
+                    d={generatePath(moodData, 320, 60)}
+                    fill="none"
+                    stroke="var(--primary)"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
+              
+              {/* Day labels */}
+              <div className="flex justify-between mt-2 px-1">
+                {moodData.map((data, index) => (
+                  <span key={index} className="text-xs text-app-muted flex-1 text-center transition-colors duration-200">
+                    {data.day}
+                  </span>
+                ))}
+              </div>
+            </div>
+            )}
+            
+            {moodData.length === 0 && !loading && (
+              <div className="text-center py-4">
+                <p className="text-app-muted text-sm">No mood data available. Start tracking your mood above!</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div>
+          <h2 className="text-xl font-bold text-app mb-4 text-center transition-colors duration-200">Quick Actions</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 max-w-4xl mx-auto">
+            {quickActions.map((action) => {
+              const Icon = action.icon;
+              return (
+                <button
+                  key={action.path}
+                  onClick={() => navigate(action.path)}
+                  className="flex items-center gap-3 p-4 bg-app-light rounded-lg border border-app-muted hover:border-primary hover:shadow-md transition-all duration-200 active:scale-[0.98] shadow-sm hover:bg-primary/10"
+                >
+                  <Icon size={20} className="text-app-muted flex-shrink-0 transition-colors duration-200" />
+                  <span className="text-app font-medium text-sm transition-colors duration-200">{action.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
         </div>
       </div>
     </div>
