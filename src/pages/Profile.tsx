@@ -3,27 +3,37 @@ import { ArrowLeft, ChevronRight, ChevronDown, User, Bell, Info, Palette, LogOut
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 
 const Profile = () => {
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
   const { user, signOut } = useAuth();
+  const { showInfo, showSuccess } = useToast();
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [showThemeDropdown, setShowThemeDropdown] = useState(false);
 
   const handleNotificationToggle = () => {
     setNotificationsEnabled(!notificationsEnabled);
-    console.log('Notifications toggled:', !notificationsEnabled);
+    if (!notificationsEnabled) {
+      showSuccess('Notifications Enabled', 'You will now receive mood reminders and wellness tips.');
+    } else {
+      showInfo('Notifications Disabled', 'Mood reminders and wellness tips have been turned off.');
+    }
   };
 
   const handleAppInfoClick = () => {
-    console.log('App info clicked');
-    alert('App Info: MindEase v1.0.0\nDeveloped for student mental wellbeing');
+    showInfo(
+      'About MindEase',
+      'Version 1.0.0 - A comprehensive mental wellbeing platform designed specifically for students.'
+    );
   };
 
   const handleProfileEdit = () => {
-    console.log('Edit profile clicked');
-    alert('Profile editing coming soon!');
+    showInfo(
+      'Coming Soon',
+      'Profile editing features will be available in the next update.'
+    );
   };
 
   const handleThemeSelect = (selectedTheme: 'light' | 'dark') => {
