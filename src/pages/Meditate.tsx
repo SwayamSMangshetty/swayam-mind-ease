@@ -4,10 +4,12 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { MeditationGuide } from '../types';
+import { useToast } from '../contexts/ToastContext';
 
 const Meditate = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { showSuccess, showError } = useToast();
   const [meditationGuides, setMeditationGuides] = useState<MeditationGuide[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -59,8 +61,6 @@ const Meditate = () => {
   const handleMeditationClick = (meditation: MeditationGuide) => {
     if (!user) return;
     
-    console.log('Starting meditation:', meditation.title);
-    
     // Save meditation session to database
     const saveMeditationSession = async () => {
       try {
@@ -74,14 +74,20 @@ const Meditate = () => {
           });
         
         if (error) throw error;
-        console.log('Meditation session saved');
+        
+        showSuccess(
+          'Meditation Started',
+          `Enjoy your ${meditation.title} session. Take deep breaths and relax.`
+        );
       } catch (err) {
-        console.error('Failed to save meditation session:', err);
+        showError(
+          'Session Error',
+          'Could not start meditation session. Please try again.'
+        );
       }
     };
     
     saveMeditationSession();
-    alert(`Starting ${meditation.title} - ${meditation.duration}`);
   };
 
   const MeditationCard = ({ meditation, size = 'normal', colorIndex }: { 

@@ -5,10 +5,12 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { MoodEntry } from '../types';
 import { moodValues, generatePath, generateFilledPath, ChartDataPoint } from '../utils/chartUtils';
+import { useToast } from '../contexts/ToastContext';
 
 const Home = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { showSuccess, showError } = useToast();
   const [moodData, setMoodData] = useState<ChartDataPoint[]>([]);
   const [loading, setLoading] = useState(false);
   const [savingMood, setSavingMood] = useState(false);
@@ -91,7 +93,10 @@ const Home = () => {
 
   const handleMoodSelect = async (mood: string) => {
     if (!isSupabaseConfigured || !user) {
-      alert('Database connection not configured. Please click "Connect to Supabase" button in the top right to set up your database.');
+      showError(
+        'Database Not Connected',
+        'Please click "Connect to Supabase" button in the top right to set up your database.'
+      );
       return;
     }
 
@@ -113,11 +118,17 @@ const Home = () => {
       // Refresh mood data after saving
       await fetchRecentMoods();
       
-      // Show success feedback
-      alert(`Mood "${mood}" saved successfully!`);
+      // Show success toast
+      showSuccess(
+        'Mood Saved!',
+        `Your ${mood} mood has been recorded successfully.`
+      );
     } catch (err) {
       console.error('Failed to save mood:', err);
-      alert('Failed to save mood. Please try again.');
+      showError(
+        'Failed to Save Mood',
+        'There was an issue saving your mood. Please try again.'
+      );
     } finally {
       setSavingMood(false);
     }
