@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, User, Mail, FileText, Camera, Save } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 
@@ -28,6 +28,12 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ onClose, onSave }) 
   React.useEffect(() => {
     const loadProfile = async () => {
       if (!user) return;
+      
+      // Skip loading if Supabase is not configured
+      if (!isSupabaseConfigured) {
+        console.warn('Supabase not configured. Skipping profile data load.');
+        return;
+      }
       
       try {
         const { data, error } = await supabase
@@ -93,6 +99,15 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ onClose, onSave }) 
 
   const handleSave = async () => {
     if (!user || !validateForm()) return;
+    
+    // Check if Supabase is configured before attempting save
+    if (!isSupabaseConfigured) {
+      showError(
+        'Database Not Connected',
+        'Please click "Connect to Supabase" button in the top right to set up your database.'
+      );
+      return;
+    }
     
     setLoading(true);
     try {

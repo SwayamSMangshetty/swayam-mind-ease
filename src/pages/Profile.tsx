@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
+import { isSupabaseConfigured } from '../lib/supabase';
 import EditProfileModal from '../components/Profile/EditProfileModal';
 
 const Profile = () => {
@@ -25,6 +26,12 @@ const Profile = () => {
   React.useEffect(() => {
     const loadProfileData = async () => {
       if (!user) return;
+      
+      // Skip loading if Supabase is not configured
+      if (!isSupabaseConfigured) {
+        console.warn('Supabase not configured. Using default profile data.');
+        return;
+      }
       
       try {
         const { supabase } = await import('../lib/supabase');
