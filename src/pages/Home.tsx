@@ -15,6 +15,15 @@ const Home = () => {
   const [loading, setLoading] = useState(false);
   const [savingMood, setSavingMood] = useState(false);
 
+  // Extract first name from user data
+  const getFirstName = () => {
+    if (user?.user_metadata?.name) {
+      return user.user_metadata.name.split(' ')[0];
+    }
+    return null;
+  };
+
+  const firstName = getFirstName();
   const moodOptions = [
     { icon: Smile, label: 'Happy', value: 'happy', color: 'text-green-500 dark:text-green-400' },
     { icon: Frown, label: 'Sad', value: 'sad', color: 'text-blue-500 dark:text-blue-400' },
@@ -154,8 +163,9 @@ const Home = () => {
         <div className="max-w-7xl mx-auto space-y-6">
         {/* Greeting */}
         <div className="text-center">
-          <h1 className="text-2xl sm:text-3xl font-bold text-app mb-2 transition-colors duration-200">Hello there</h1>
-          <p className="text-base sm:text-lg text-app-muted transition-colors duration-200">How are you feeling today?</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-app mb-2 transition-colors duration-200">
+            👋 Hey {firstName ? `${firstName},` : 'there,'} How are you feeling today?
+          </h1>
         </div>
 
         {/* Mood Selection */}
