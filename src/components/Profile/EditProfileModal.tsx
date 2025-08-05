@@ -10,7 +10,7 @@ interface EditProfileModalProps {
 }
 
 const EditProfileModal: React.FC<EditProfileModalProps> = ({ onClose, onSave }) => {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const { showSuccess, showError } = useToast();
   
   // Initialize form state with current user data
@@ -116,6 +116,9 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ onClose, onSave }) 
       });
       
       if (authError) throw authError;
+      
+      // Refresh user data in AuthContext to update greeting immediately
+      await refreshUser();
       
       showSuccess(
         'Profile Updated',
