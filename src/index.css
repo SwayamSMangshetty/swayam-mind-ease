@@ -4,38 +4,39 @@
 
 :root {
   /* Light mode colors */
-  --bg-dark: oklch(0.92 0.1 319);
-  --bg: oklch(0.96 0.1 319);
-  --bg-light: oklch(1 0.1 319);
-  --text: oklch(0.15 0.2 319);
-  --text-muted: oklch(0.4 0.2 319);
-  --highlight: oklch(1 0.2 319);
-  --border: oklch(0.6 0.2 319);
-  --border-muted: oklch(0.7 0.2 319);
-  --primary: oklch(0.4 0.2 319);
-  --secondary: oklch(0.4 0.2 139);
-  --danger: oklch(0.5 0.2 30);
-  --warning: oklch(0.5 0.2 100);
-  --success: oklch(0.5 0.2 160);
-  --info: oklch(0.5 0.2 260);
+  /* Light mode colors - MindEase Brand Palette */
+  --bg-dark: #F0F2F5;
+  --bg: #F7F8FA;
+  --bg-light: #FFFFFF;
+  --text: #5C5F66;
+  --text-muted: #9CA3AF;
+  --highlight: #C9B6E4;
+  --border: #E5E7EB;
+  --border-muted: #F3F4F6;
+  --primary: #C9B6E4;
+  --secondary: #A9D6E5;
+  --danger: #EF4444;
+  --warning: #F59E0B;
+  --success: #B8E0D2;
+  --info: #3B82F6;
 }
 
 .dark {
-  /* Dark mode colors */
-  --bg-dark: oklch(0.1 0.1 319);
-  --bg: oklch(0.15 0.1 319);
-  --bg-light: oklch(0.2 0.1 319);
-  --text: oklch(0.96 0.1 319);
-  --text-muted: oklch(0.76 0.1 319);
-  --highlight: oklch(0.5 0.2 319);
-  --border: oklch(0.4 0.2 319);
-  --border-muted: oklch(0.3 0.2 319);
-  --primary: oklch(0.76 0.2 319);
-  --secondary: oklch(0.76 0.2 139);
-  --danger: oklch(0.7 0.2 30);
-  --warning: oklch(0.7 0.2 100);
-  --success: oklch(0.7 0.2 160);
-  --info: oklch(0.7 0.2 260);
+  /* Dark mode colors - MindEase Brand Palette */
+  --bg-dark: #1B1C22;
+  --bg: #2E2E3A;
+  --bg-light: #3A3B47;
+  --text: #F9FAFB;
+  --text-muted: #D1D5DB;
+  --highlight: #A18EC1;
+  --border: #4B5563;
+  --border-muted: #374151;
+  --primary: #A18EC1;
+  --secondary: #7FB7C9;
+  --danger: #F87171;
+  --warning: #FBBF24;
+  --success: #8FBFAF;
+  --info: #60A5FA;
 }
 
 @layer utilities {
