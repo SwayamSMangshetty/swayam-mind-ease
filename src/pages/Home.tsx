@@ -154,7 +154,9 @@ const Home = () => {
         <div className="max-w-7xl mx-auto space-y-6">
         {/* Greeting */}
         <div className="text-center">
-          <h1 className="text-2xl sm:text-3xl font-bold text-app mb-2 transition-colors duration-200">Hello there</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-app mb-2 transition-colors duration-200">
+            Hey {user?.user_metadata?.name ? user.user_metadata.name.split(' ')[0] : 'there'},
+          </h1>
           <p className="text-base sm:text-lg text-app-muted transition-colors duration-200">How are you feeling today?</p>
         </div>
 
