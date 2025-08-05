@@ -92,15 +92,17 @@ const Journal = () => {
       {/* Header */}
       <div className="bg-app-light px-4 py-3 border-b border-app-muted sticky top-0 z-40 transition-colors duration-200">
         <div className="w-full max-w-4xl mx-auto">
-          <div className="flex justify-between items-center mb-3 sm:mb-4">
+          <div className="flex justify-center items-center mb-3 sm:mb-4 relative">
             <h1 className="text-xl font-bold text-app transition-colors duration-200">Journal</h1>
-            <button
-              onClick={() => setShowNewEntry(true)}
-              className="bg-primary hover:bg-primary/90 text-white p-2 rounded-full transition-all duration-200 active:scale-95 shadow-sm hover:shadow-md"
-              disabled={loading}
-            >
-              <Plus size={20} />
-            </button>
+            <div className="absolute right-0 flex items-center gap-2">
+              <button
+                onClick={() => setShowNewEntry(true)}
+                className="bg-primary hover:bg-primary/90 text-white p-2 rounded-full transition-all duration-200 active:scale-95 shadow-sm hover:shadow-md"
+                disabled={loading}
+              >
+                <Plus size={20} />
+              </button>
+            </div>
           </div>
           
           {/* Search and Filter Bar */}

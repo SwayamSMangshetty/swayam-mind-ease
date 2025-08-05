@@ -168,8 +168,8 @@ const Trends = () => {
     <div className="bg-app transition-colors duration-200 min-h-screen">
       {/* Header */}
       <div className="bg-app-light px-4 py-3 border-b border-app-muted sticky top-0 z-40 transition-colors duration-200">
-        <div className="w-full">
-          <h1 className="text-lg font-semibold text-app transition-colors duration-200 text-center">Mood Trends</h1>
+        <div className="flex justify-center items-center w-full">
+          <h1 className="text-xl font-bold text-app transition-colors duration-200">Trends</h1>
         </div>
       </div>
 

@@ -126,8 +126,8 @@ const Meditate = () => {
     <div className="bg-app min-h-screen transition-colors duration-200">
       {/* Header */}
       <div className="bg-app-light px-4 sm:px-6 py-3 sm:py-4 border-b border-app-muted sticky top-0 z-40 transition-colors duration-200">
-        <div className="w-full">
-          <h1 className="text-lg sm:text-xl font-semibold text-app transition-colors duration-200 text-center">Meditations</h1>
+        <div className="flex justify-center items-center w-full">
+          <h1 className="text-xl font-bold text-app transition-colors duration-200">Meditate</h1>
         </div>
       </div>
 
