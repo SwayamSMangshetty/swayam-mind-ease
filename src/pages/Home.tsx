@@ -134,6 +134,10 @@ const Home = () => {
     }
   };
 
+  const handleChartClick = (data: ChartDataPoint) => {
+    alert(`Day: ${data.day}, Value: ${data.value}`);
+  };
+
   return (
     <div className="bg-app transition-colors duration-200">
       {/* Header - Full Width */}

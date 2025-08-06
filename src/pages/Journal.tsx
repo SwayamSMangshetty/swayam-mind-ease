@@ -15,6 +15,8 @@ const Journal = () => {
   const [showViewEntry, setShowViewEntry] = useState(false);
   const [showEditEntry, setShowEditEntry] = useState(false);
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
+  const [filteredEntries, setFilteredEntries] = useState<JournalEntry[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,6 +33,7 @@ const Journal = () => {
 
       if (error) throw error;
       setJournalEntries(data || []);
+      setFilteredEntries(data || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch journal entries');
     } finally {
@@ -85,6 +88,43 @@ const Journal = () => {
   const handleDeleteEntry = () => {
     fetchJournalEntries();
     handleCloseModals();
+  };
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const term = e.target.value.toLowerCase();
+    setSearchTerm(term);
+    
+    if (!term) {
+      setFilteredEntries(journalEntries);
+    } else {
+      const filtered = journalEntries.filter(entry =>
+        entry.title.toLowerCase().includes(term) ||
+        entry.content.toLowerCase().includes(term)
+      );
+      setFilteredEntries(filtered);
+    }
+  };
+
+  const handleExport = () => {
+    const csvContent = [
+      ['Title', 'Content', 'Mood', 'Created Date'],
+      ...journalEntries.map(entry => [
+        entry.title,
+        entry.content.replace(/"/g, '""'),
+        entry.mood || '',
+        new Date(entry.created_at).toLocaleString()
+      ])
+    ].map(row => row.map(field => `"${field}"`).join(',')).join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `journal-entries-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -145,7 +185,7 @@ const Journal = () => {
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 max-w-7xl mx-auto">
-            {journalEntries.map((entry) => (
+            {filteredEntries.map((entry) => (
               <div
                 key={entry.id}
                 onClick={() => handleEntryClick(entry)}
@@ -169,7 +209,7 @@ const Journal = () => {
       </div>
 
       {/* Empty State (when no entries) */}
-      {journalEntries.length === 0 && !loading && (
+      {filteredEntries.length === 0 && !loading && (
         <div className="flex flex-col items-center justify-center py-16 px-6">
           <div className="bg-app-light rounded-2xl p-8 border border-app-muted shadow-sm max-w-md mx-auto text-center">
             <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4 mx-auto transition-colors duration-200">
