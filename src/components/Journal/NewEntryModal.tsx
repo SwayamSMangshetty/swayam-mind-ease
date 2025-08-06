@@ -82,7 +82,7 @@ const NewEntryModal: React.FC<NewEntryModalProps> = ({ onClose, onSave }) => {
           {/* Title Input */}
           <input
             type="text"
-            placeholder="How are you feeling today?"
+            placeholder="Entry Title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className="w-full p-3 bg-app-dark text-app placeholder-app-muted rounded-lg border-none outline-none mb-4 text-sm transition-colors duration-200 focus:ring-2 focus:ring-primary shadow-sm"
@@ -110,25 +110,9 @@ const NewEntryModal: React.FC<NewEntryModalProps> = ({ onClose, onSave }) => {
             </div>
           </div>
 
-          {/* Formatting Toolbar */}
-          <div className="flex gap-3 mb-4 pb-4 border-b border-app-muted transition-colors duration-200">
-            <button className="flex flex-col items-center gap-1 p-2 hover:bg-app-dark rounded-lg transition-all duration-200 active:scale-95 hover:shadow-sm">
-              <Bold size={16} className="text-app-muted" />
-              <span className="text-xs text-app-muted">Bold</span>
-            </button>
-            <button className="flex flex-col items-center gap-1 p-2 hover:bg-app-dark rounded-lg transition-all duration-200 active:scale-95 hover:shadow-sm">
-              <Italic size={16} className="text-app-muted" />
-              <span className="text-xs text-app-muted">Italic</span>
-            </button>
-            <button className="flex flex-col items-center gap-1 p-2 hover:bg-app-dark rounded-lg transition-all duration-200 active:scale-95 hover:shadow-sm">
-              <List size={16} className="text-app-muted" />
-              <span className="text-xs text-app-muted">Bullets</span>
-            </button>
-          </div>
-
           {/* Text Area */}
           <textarea
-            placeholder="Start writing your thoughts..."
+            placeholder="Entry Title"
             value={content}
             onChange={(e) => setContent(e.target.value)}
             className="flex-1 w-full p-0 border-none outline-none resize-none bg-transparent text-app placeholder-app-muted leading-relaxed text-sm transition-colors duration-200 focus:ring-0"

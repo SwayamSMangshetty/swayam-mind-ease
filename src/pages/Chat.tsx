@@ -280,12 +280,6 @@ const Chat = () => {
                 <Send size={20} />
               )}
             </button>
-            <button 
-              className="p-2 text-app-muted hover:text-primary hover:bg-primary/10 rounded-full transition-all duration-200 active:scale-95" 
-              disabled={sending || loading || isBotTyping}
-            >
-              <Image size={20} />
-            </button>
           </div>
         </div>
       </div>

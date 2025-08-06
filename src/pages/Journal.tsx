@@ -106,21 +106,26 @@ const Journal = () => {
   };
 
   const handleExport = () => {
+    // Moved to exportEntry function
+  };
+
+  const exportEntry = (entry: JournalEntry) => {
     const csvContent = [
-      ['Title', 'Content', 'Mood', 'Created Date'],
-      ...journalEntries.map(entry => [
+      ['Title', 'Content', 'Mood', 'Created Date', 'Updated Date'],
+      [
         entry.title,
         entry.content.replace(/"/g, '""'),
         entry.mood || '',
-        new Date(entry.created_at).toLocaleString()
-      ])
+        new Date(entry.created_at).toLocaleString(),
+        new Date(entry.updated_at).toLocaleString()
+      ]
     ].map(row => row.map(field => `"${field}"`).join(',')).join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', `journal-entries-${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute('download', `journal-entry-${entry.id}-${new Date().toISOString().split('T')[0]}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -154,17 +159,8 @@ const Journal = () => {
               onChange={handleSearch}
               className="flex-1 px-3 py-2 text-sm border border-app-muted bg-app-light text-app placeholder-app-muted rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
             />
-            <button 
-              onClick={handleExport}
-              className="px-3 py-2 border border-app-muted bg-app-light rounded-lg hover:bg-app-dark transition-all duration-200 active:scale-95 text-sm font-medium text-app shadow-sm hover:shadow-md"
-            >
-              Export Entries
-            </button>
             <div className="flex gap-2">
               <button className="p-2 border border-app-muted bg-app-light rounded-lg hover:bg-app-dark transition-all duration-200 active:scale-95">
-              <Calendar size={16} className="text-app-muted" />
-            </button>
-            <button className="p-2 border border-app-muted bg-app-light rounded-lg hover:bg-app-dark transition-all duration-200 active:scale-95 shadow-sm hover:shadow-md">
               <Filter size={16} className="text-app-muted" />
             </button>
             <button className="p-2 border border-app-muted bg-app-light rounded-lg hover:bg-app-dark transition-all duration-200 active:scale-95 shadow-sm hover:shadow-md">
@@ -195,10 +191,9 @@ const Journal = () => {
             {journalEntries.map((entry) => (
               <div
                 key={entry.id}
-                onClick={() => handleEntryClick(entry)}
                 className="bg-app-light rounded-xl p-4 shadow-sm border border-app-muted hover:shadow-md hover:border-primary/50 transition-all duration-200 cursor-pointer active:scale-[0.98]"
               >
-                <div className="flex justify-between items-start mb-2">
+                <div onClick={() => handleEntryClick(entry)} className="flex justify-between items-start mb-2">
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-app mb-1 text-sm truncate transition-colors duration-200">{entry.title || 'Untitled'}</h3>
                     <p className="text-xs text-app-muted mb-2 transition-colors duration-200">{formatDate(entry.created_at)}</p>
@@ -209,6 +204,15 @@ const Journal = () => {
                     entry.mood === 'neutral' ? 'bg-warning' : 'bg-info'
                   }`} />
                 </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    exportEntry(entry);
+                  }}
+                  className="w-full mt-2 px-3 py-1 text-xs bg-primary/10 text-primary rounded hover:bg-primary/20 transition-colors duration-200"
+                >
+                  Export
+                </button>
               </div>
             ))}
           </div>
