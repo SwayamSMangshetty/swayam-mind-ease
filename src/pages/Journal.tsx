@@ -147,15 +147,21 @@ const Journal = () => {
           
           {/* Search and Filter Bar */}
           <div className="flex gap-2">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-app-muted" size={16} />
-              <input
-                type="text"
-                placeholder="Search entries..."
-                className="w-full pl-9 pr-3 py-2 text-sm border border-app-muted bg-app-light text-app placeholder-app-muted rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
-              />
-            </div>
-            <button className="p-2 border border-app-muted bg-app-light rounded-lg hover:bg-app-dark transition-all duration-200 active:scale-95">
+            <input
+              type="text"
+              placeholder="Search journal…"
+              value={searchTerm}
+              onChange={handleSearch}
+              className="flex-1 px-3 py-2 text-sm border border-app-muted bg-app-light text-app placeholder-app-muted rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+            />
+            <button 
+              onClick={handleExport}
+              className="px-3 py-2 border border-app-muted bg-app-light rounded-lg hover:bg-app-dark transition-all duration-200 active:scale-95 text-sm font-medium text-app shadow-sm hover:shadow-md"
+            >
+              Export Entries
+            </button>
+            <div className="flex gap-2">
+              <button className="p-2 border border-app-muted bg-app-light rounded-lg hover:bg-app-dark transition-all duration-200 active:scale-95">
               <Calendar size={16} className="text-app-muted" />
             </button>
             <button className="p-2 border border-app-muted bg-app-light rounded-lg hover:bg-app-dark transition-all duration-200 active:scale-95 shadow-sm hover:shadow-md">
@@ -164,6 +170,7 @@ const Journal = () => {
             <button className="p-2 border border-app-muted bg-app-light rounded-lg hover:bg-app-dark transition-all duration-200 active:scale-95 shadow-sm hover:shadow-md">
               <Calendar size={16} className="text-app-muted" />
             </button>
+            </div>
           </div>
         </div>
       </div>
@@ -185,7 +192,7 @@ const Journal = () => {
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 max-w-7xl mx-auto">
-            {filteredEntries.map((entry) => (
+            {journalEntries.map((entry) => (
               <div
                 key={entry.id}
                 onClick={() => handleEntryClick(entry)}
@@ -209,7 +216,7 @@ const Journal = () => {
       </div>
 
       {/* Empty State (when no entries) */}
-      {filteredEntries.length === 0 && !loading && (
+      {journalEntries.length === 0 && !loading && (
         <div className="flex flex-col items-center justify-center py-16 px-6">
           <div className="bg-app-light rounded-2xl p-8 border border-app-muted shadow-sm max-w-md mx-auto text-center">
             <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4 mx-auto transition-colors duration-200">
