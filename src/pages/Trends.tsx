@@ -78,7 +78,7 @@ const Trends = () => {
           
           processedData.push({
             label: labels[i],
-            value: value
+            value: value !== null ? value : 6
           });
         }
       } else if (period === 'Month') {
@@ -102,7 +102,7 @@ const Trends = () => {
           
           processedData.push({
             label: labels[week],
-            value: value
+            value: value !== null ? value : 6
           });
         }
       } else { // Year
@@ -124,7 +124,7 @@ const Trends = () => {
           
           processedData.push({
             label: labels[month],
-            value: value
+            value: value !== null ? value : 6
           });
         }
       }

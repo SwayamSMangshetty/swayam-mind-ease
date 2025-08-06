@@ -73,7 +73,7 @@ const Home = () => {
         chartData.push({
           day: dayName,
           label: dayName,
-          value: value
+          value: value !== null ? value : 6
         });
       }
       
