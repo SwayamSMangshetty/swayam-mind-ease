@@ -15,6 +15,8 @@ const Journal = () => {
   const [showViewEntry, setShowViewEntry] = useState(false);
   const [showEditEntry, setShowEditEntry] = useState(false);
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
+  const [filteredEntries, setFilteredEntries] = useState<JournalEntry[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,6 +33,7 @@ const Journal = () => {
 
       if (error) throw error;
       setJournalEntries(data || []);
+      setFilteredEntries(data || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch journal entries');
     } finally {
@@ -87,6 +90,43 @@ const Journal = () => {
     handleCloseModals();
   };
 
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const term = e.target.value.toLowerCase();
+    setSearchTerm(term);
+    
+    if (!term) {
+      setFilteredEntries(journalEntries);
+    } else {
+      const filtered = journalEntries.filter(entry =>
+        entry.title.toLowerCase().includes(term) ||
+        entry.content.toLowerCase().includes(term)
+      );
+      setFilteredEntries(filtered);
+    }
+  };
+
+  const handleExport = () => {
+    const csvContent = [
+      ['Title', 'Content', 'Mood', 'Created Date'],
+      ...journalEntries.map(entry => [
+        entry.title,
+        entry.content.replace(/"/g, '""'),
+        entry.mood || '',
+        new Date(entry.created_at).toLocaleString()
+      ])
+    ].map(row => row.map(field => `"${field}"`).join(',')).join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `journal-entries-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="bg-app transition-colors duration-200">
       {/* Header */}
@@ -107,15 +147,21 @@ const Journal = () => {
           
           {/* Search and Filter Bar */}
           <div className="flex gap-2">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-app-muted" size={16} />
-              <input
-                type="text"
-                placeholder="Search entries..."
-                className="w-full pl-9 pr-3 py-2 text-sm border border-app-muted bg-app-light text-app placeholder-app-muted rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
-              />
-            </div>
-            <button className="p-2 border border-app-muted bg-app-light rounded-lg hover:bg-app-dark transition-all duration-200 active:scale-95">
+            <input
+              type="text"
+              placeholder="Search journal…"
+              value={searchTerm}
+              onChange={handleSearch}
+              className="flex-1 px-3 py-2 text-sm border border-app-muted bg-app-light text-app placeholder-app-muted rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+            />
+            <button 
+              onClick={handleExport}
+              className="px-3 py-2 border border-app-muted bg-app-light rounded-lg hover:bg-app-dark transition-all duration-200 active:scale-95 text-sm font-medium text-app shadow-sm hover:shadow-md"
+            >
+              Export Entries
+            </button>
+            <div className="flex gap-2">
+              <button className="p-2 border border-app-muted bg-app-light rounded-lg hover:bg-app-dark transition-all duration-200 active:scale-95">
               <Calendar size={16} className="text-app-muted" />
             </button>
             <button className="p-2 border border-app-muted bg-app-light rounded-lg hover:bg-app-dark transition-all duration-200 active:scale-95 shadow-sm hover:shadow-md">
@@ -124,6 +170,7 @@ const Journal = () => {
             <button className="p-2 border border-app-muted bg-app-light rounded-lg hover:bg-app-dark transition-all duration-200 active:scale-95 shadow-sm hover:shadow-md">
               <Calendar size={16} className="text-app-muted" />
             </button>
+            </div>
           </div>
         </div>
       </div>

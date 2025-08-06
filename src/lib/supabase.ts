@@ -9,10 +9,27 @@ if (!isSupabaseConfigured) {
   console.warn('Supabase environment variables are missing. Please click "Connect to Supabase" button to set up your database connection.');
 }
 
+// Create a mock client that throws descriptive errors when Supabase is not configured
+const mockSupabaseClient = {
+  from: () => ({
+    select: () => Promise.reject(new Error('Supabase not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables.')),
+    insert: () => Promise.reject(new Error('Supabase not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables.')),
+    update: () => Promise.reject(new Error('Supabase not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables.')),
+    delete: () => Promise.reject(new Error('Supabase not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables.'))
+  }),
+  auth: {
+    getUser: () => Promise.reject(new Error('Supabase not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables.')),
+    getSession: () => Promise.reject(new Error('Supabase not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables.')),
+    signUp: () => Promise.reject(new Error('Supabase not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables.')),
+    signInWithPassword: () => Promise.reject(new Error('Supabase not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables.')),
+    signOut: () => Promise.reject(new Error('Supabase not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables.')),
+    onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } })
+  }
+};
+
 export const supabase = isSupabaseConfigured 
   ? createClient(supabaseUrl, supabaseKey)
-  : null as any; // Fallback to prevent initialization errors
-
+  : mockSupabaseClient as any;
 
 // Helper function to get current user ID from authenticated session
 export const getCurrentUserId = () => {
