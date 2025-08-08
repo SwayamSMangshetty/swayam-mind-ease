@@ -290,59 +290,10 @@ const Journal = () => {
             <div className="flex gap-2">
               {/* Mood Filter */}
               <div className="relative">
-              <button className="p-2 border border-app-muted bg-app-light rounded-lg hover:bg-app-dark transition-all duration-200 active:scale-95">
-              <Filter size={16} className="text-app-muted" />
-            </button>
-            <button className="p-2 border border-app-muted bg-app-light rounded-lg hover:bg-app-dark transition-all duration-200 active:scale-95 shadow-sm hover:shadow-md">
-              <Calendar size={16} className="text-app-muted" />
-            </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Journal Entries */}
-      <div className="p-4">
-        <div className="w-full space-y-3">
-          {loading && (
-            <div className="text-center py-8 bg-app-light rounded-lg border border-app-muted mx-auto max-w-md">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-              <p className="text-app-muted mt-2">Loading entries...</p>
-            </div>
-          )}
-
-          {error && (
-            <div className="bg-danger/10 border border-danger rounded-lg p-4 mx-auto max-w-md">
-              <p className="text-danger text-sm">{error}</p>
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 max-w-7xl mx-auto">
-            {journalEntries.map((entry) => (
-              <div
-                key={entry.id}
-                className="bg-app-light rounded-xl p-4 shadow-sm border border-app-muted hover:shadow-md hover:border-primary/50 transition-all duration-200 cursor-pointer active:scale-[0.98]"
-              >
-                <div onClick={() => handleEntryClick(entry)} className="flex justify-between items-start mb-2">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-app mb-1 text-sm truncate transition-colors duration-200">{entry.title || 'Untitled'}</h3>
-                    <p className="text-xs text-app-muted mb-2 transition-colors duration-200">{formatDate(entry.created_at)}</p>
-                    <p className="text-app-muted text-sm leading-relaxed line-clamp-2 transition-colors duration-200">{entry.content.substring(0, 100)}...</p>
-                  </div>
-                  <div className={`w-3 h-3 rounded-full ml-3 mt-1 flex-shrink-0 ${
-                    entry.mood === 'happy' ? 'bg-success' :
-                    entry.mood === 'neutral' ? 'bg-warning' : 'bg-info'
-                  }`} />
-                </div>
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    exportEntry(entry);
-                  }}
                   onClick={() => setShowMoodFilter(!showMoodFilter)}
-                  className="w-full mt-2 px-3 py-1 text-xs bg-primary/10 text-primary rounded hover:bg-primary/20 transition-colors duration-200"
-                >
-                  Export
+                  className="p-2 border border-app-muted bg-app-light rounded-lg hover:bg-app-dark transition-all duration-200 active:scale-95">
+                  <Filter size={16} className="text-app-muted" />
                 </button>
                 {showMoodFilter && (
                   <div className="absolute top-full right-0 mt-2 bg-app-light rounded-lg border border-app-muted shadow-lg z-50 min-w-40">
@@ -360,11 +311,14 @@ const Journal = () => {
                   </div>
                 )}
               </div>
-                  onClick={() => setShowDatePicker(!showDatePicker)}
 
               {/* Date Filter */}
               <div className="relative">
-              </div>
+                <button
+                  onClick={() => setShowDatePicker(!showDatePicker)}
+                  className="p-2 border border-app-muted bg-app-light rounded-lg hover:bg-app-dark transition-all duration-200 active:scale-95 shadow-sm hover:shadow-md">
+                  <Calendar size={16} className="text-app-muted" />
+                </button>
                 {showDatePicker && (
                   <div className="absolute top-full right-0 mt-2 bg-app-light rounded-lg border border-app-muted shadow-lg z-50 p-4">
                     <input
@@ -376,7 +330,7 @@ const Journal = () => {
                   </div>
                 )}
               </div>
-            ))}
+            </div>
           </div>
 
           {/* Active Filters */}
@@ -397,6 +351,34 @@ const Journal = () => {
                 <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
                   Date: {new Date(selectedDate).toLocaleDateString()}
                 </span>
+              )}
+              <button
+                onClick={clearFilters}
+                className="text-xs text-app-muted hover:text-primary underline"
+              >
+                Clear all
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Journal Entries */}
+      <div className="p-4">
+        <div className="w-full space-y-3">
+          {loading && (
+            <div className="text-center py-8 bg-app-light rounded-lg border border-app-muted mx-auto max-w-md">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+              <p className="text-app-muted mt-2">Loading entries...</p>
+            </div>
+          )}
+
+          {error && (
+            <div className="bg-danger/10 border border-danger rounded-lg p-4 mx-auto max-w-md">
+              <p className="text-danger text-sm">{error}</p>
+            </div>
+          )}
+
           {/* Filter Message */}
           {getFilterMessage() && (
             <div className="text-center py-8 bg-app-light rounded-lg border border-app-muted mx-auto max-w-md">
@@ -409,84 +391,100 @@ const Journal = () => {
               </button>
             </div>
           )}
-              )}
-              <button
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 max-w-7xl mx-auto">
             {filteredEntries.map((entry) => (
-                className="text-xs text-app-muted hover:text-primary underline"
+              <div
+                key={entry.id}
+                className="bg-app-light rounded-xl p-4 shadow-sm border border-app-muted hover:shadow-md hover:border-primary/50 transition-all duration-200 cursor-pointer active:scale-[0.98]"
               >
-                Clear all
-              </button>
-            </div>
-          )}
-                    <div className="flex items-start justify-between mb-1">
-        </div>
+                <div onClick={() => handleEntryClick(entry)}>
+                  <div className="flex items-start justify-between mb-1">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-app mb-1 text-sm truncate transition-colors duration-200">{entry.title || 'Untitled'}</h3>
                       {favoriteEntries.has(entry.id) && (
                         <Heart size={12} className="text-danger fill-current ml-2 flex-shrink-0" />
                       )}
                     </div>
-      </div>
-
-      {/* Empty State (when no entries) */}
-                  <div className="flex items-center gap-1 ml-2">
-                    <div className={`w-3 h-3 rounded-full flex-shrink-0 ${
-                      entry.mood === 'happy' ? 'bg-success' :
-                      entry.mood === 'neutral' ? 'bg-warning' : 
-                      entry.mood === 'sad' ? 'bg-info' :
-                      entry.mood === 'angry' ? 'bg-danger' : 'bg-app-muted'
-                    }`} />
-                    <div className="relative">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setActiveDropdown(activeDropdown === entry.id ? null : entry.id);
-                        }}
-                        className="p-1 hover:bg-app-dark rounded-full transition-colors duration-200"
-                      >
-                        <MoreVertical size={14} className="text-app-muted" />
-                      </button>
-                      
-                      {activeDropdown === entry.id && (
-                        <div className="absolute top-full right-0 mt-1 bg-app-light rounded-lg border border-app-muted shadow-lg z-50 min-w-32">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleFavorite(entry.id);
-                            }}
-                            className="w-full text-left px-3 py-2 text-sm hover:bg-app-dark transition-colors duration-200 first:rounded-t-lg flex items-center gap-2"
-                          >
-                            <Heart size={14} className={favoriteEntries.has(entry.id) ? 'text-danger fill-current' : 'text-app-muted'} />
-                            {favoriteEntries.has(entry.id) ? 'Unfavorite' : 'Favorite'}
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              exportEntry(entry);
-                              setActiveDropdown(null);
-                            }}
-                            className="w-full text-left px-3 py-2 text-sm hover:bg-app-dark transition-colors duration-200 flex items-center gap-2"
-                          >
-                            <Download size={14} className="text-app-muted" />
-                            Export
-      {journalEntries.length === 0 && !loading && !getFilterMessage() && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteClick(entry);
-                            }}
-                            className="w-full text-left px-3 py-2 text-sm hover:bg-app-dark transition-colors duration-200 last:rounded-b-lg flex items-center gap-2 text-danger"
-                          >
-                            <Trash2 size={14} className="text-danger" />
-                            Delete
-                          </button>
-                        </div>
-                      )}
+                    <div className="flex items-center gap-1 ml-2">
+                      <div className={`w-3 h-3 rounded-full flex-shrink-0 ${
+                        entry.mood === 'happy' ? 'bg-success' :
+                        entry.mood === 'neutral' ? 'bg-warning' : 
+                        entry.mood === 'sad' ? 'bg-info' :
+                        entry.mood === 'angry' ? 'bg-danger' : 'bg-app-muted'
+                      }`} />
+                      <div className="relative">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveDropdown(activeDropdown === entry.id ? null : entry.id);
+                          }}
+                          className="p-1 hover:bg-app-dark rounded-full transition-colors duration-200"
+                        >
+                          <MoreVertical size={14} className="text-app-muted" />
+                        </button>
+                        
+                        {activeDropdown === entry.id && (
+                          <div className="absolute top-full right-0 mt-1 bg-app-light rounded-lg border border-app-muted shadow-lg z-50 min-w-32">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleFavorite(entry.id);
+                              }}
+                              className="w-full text-left px-3 py-2 text-sm hover:bg-app-dark transition-colors duration-200 first:rounded-t-lg flex items-center gap-2"
+                            >
+                              <Heart size={14} className={favoriteEntries.has(entry.id) ? 'text-danger fill-current' : 'text-app-muted'} />
+                              {favoriteEntries.has(entry.id) ? 'Unfavorite' : 'Favorite'}
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                exportEntry(entry);
+                                setActiveDropdown(null);
+                              }}
+                              className="w-full text-left px-3 py-2 text-sm hover:bg-app-dark transition-colors duration-200 flex items-center gap-2"
+                            >
+                              <Download size={14} className="text-app-muted" />
+                              Export
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteClick(entry);
+                              }}
+                              className="w-full text-left px-3 py-2 text-sm hover:bg-app-dark transition-colors duration-200 last:rounded-b-lg flex items-center gap-2 text-danger"
+                            >
+                              <Trash2 size={14} className="text-danger" />
+                              Delete
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-            <Plus size={20} className="text-primary" />
-            Write First Entry
-          </button>
+                  <p className="text-xs text-app-muted mb-2 transition-colors duration-200">{formatDate(entry.created_at)}</p>
+                  <p className="text-app-muted text-sm leading-relaxed line-clamp-2 transition-colors duration-200">{entry.content.substring(0, 100)}...</p>
+                </div>
+              </div>
+            ))}
           </div>
+
+          {/* Empty State (when no entries) */}
+          {journalEntries.length === 0 && !loading && !getFilterMessage() && (
+            <div className="text-center py-12 bg-app-light rounded-lg border border-app-muted mx-auto max-w-md">
+              <p className="text-app-muted mb-4">No journal entries yet</p>
+              <button
+                onClick={() => setShowNewEntry(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all duration-200"
+              >
+                <Plus size={20} className="text-primary" />
+                Write First Entry
+              </button>
+            </div>
+          )}
         </div>
+      </div>
+
       {/* Delete Confirmation Dialog */}
       {showDeleteDialog && entryToDelete && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
@@ -512,7 +510,7 @@ const Journal = () => {
           </div>
         </div>
       )}
-      )}
+
       {/* Backdrop for dropdowns */}
       {(activeDropdown || showMoodFilter || showDatePicker) && (
         <div 
