@@ -31,7 +31,6 @@ const Journal = () => {
     
     try {
       setLoading(true);
-      setError(null);
       const { data, error } = await supabase
         .from('journal_entries')
         .select('*')
@@ -40,12 +39,9 @@ const Journal = () => {
 
       if (error) throw error;
       setJournalEntries(data || []);
-      setFilteredEntries(data || []);
+      applyFilters(data || [], searchTerm, moodFilter, dateFilter);
     } catch (err) {
-      console.error('Failed to fetch journal entries:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch journal entries');
-      setJournalEntries([]);
-      setFilteredEntries([]);
     } finally {
       setLoading(false);
     }
@@ -270,15 +266,15 @@ const Journal = () => {
             </div>
           )}
 
-          {moodFilter !== 'all' && filteredEntries.length === 0 && !loading && !error && journalEntries.length > 0 && (
-            <div className="text-center py-8 bg-app-light rounded-lg border border-app-muted mx-auto max-w-md p-6">
-              <p className="text-app-muted">No entries found for selected mood.</p>
+          {error && (
+            <div className="bg-danger/10 border border-danger rounded-lg p-4 mx-auto max-w-md">
+              <p className="text-danger text-sm">{error}</p>
             </div>
           )}
 
           {/* No entries for selected date */}
-          {dateFilter && filteredEntries.length === 0 && !loading && !error && journalEntries.length > 0 && (
-            <div className="text-center py-8 bg-app-light rounded-lg border border-app-muted mx-auto max-w-md p-6">
+          {dateFilter && filteredEntries.length === 0 && !loading && (
+            <div className="text-center py-8 bg-app-light rounded-lg border border-app-muted mx-auto max-w-md">
               <p className="text-app-muted">No entries for this date.</p>
             </div>
           )}

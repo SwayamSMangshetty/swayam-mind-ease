@@ -1,30 +1,25 @@
 export const moodValues: { [key: string]: number } = {
-  'happy': 3,  // Top of chart
+  'happy': 3,
   'neutral': 2,
   'angry': 1,
-  'sad': 0     // Bottom of chart
+  'sad': 0
 };
 
 export interface ChartDataPoint {
   label: string;
   value: number;
-  day?: string;
 }
 
 // Generate SVG path for curved line
 export const generatePath = (data: ChartDataPoint[], width: number, height: number): string => {
-  if (!data || data.length === 0) return '';
-  
   const maxValue = 3;
-  const minValue = 0;
   const stepX = width / (data.length - 1);
   
   let path = '';
   
   data.forEach((point, index) => {
     const x = index * stepX;
-    // Map mood value to Y coordinate (flip Y axis so Happy is at top)
-    const y = height - ((point.value - minValue) / (maxValue - minValue)) * height;
+    const y = height - (point.value / maxValue) * height;
     
     if (index === 0) {
       path += `M ${x} ${y}`;
@@ -38,18 +33,16 @@ export const generatePath = (data: ChartDataPoint[], width: number, height: numb
 
 // Generate filled path for area chart
 export const generateFilledPath = (data: ChartDataPoint[], width: number, height: number): string => {
-  if (!data || data.length === 0) return '';
-  
   const maxValue = 3;
-  const minValue = 0;
   const stepX = width / (data.length - 1);
+  
+  if (data.length === 0) return '';
   
   let path = `M 0 ${height}`;
   
   data.forEach((point, index) => {
     const x = index * stepX;
-    // Map mood value to Y coordinate (flip Y axis so Happy is at top)  
-    const y = height - ((point.value - minValue) / (maxValue - minValue)) * height;
+    const y = height - (point.value / maxValue) * height;
     path += ` L ${x} ${y}`;
   });
   

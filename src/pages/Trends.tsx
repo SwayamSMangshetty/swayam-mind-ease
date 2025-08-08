@@ -28,17 +28,21 @@ const Trends = () => {
       
       const now = new Date();
       let startDate: Date;
+      let labels: string[] = [];
       
       // Calculate date range and labels based on period
       if (period === 'Week') {
         startDate = new Date(now);
         startDate.setDate(startDate.getDate() - 7);
+        labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
       } else if (period === 'Month') {
         startDate = new Date(now);
         startDate.setDate(startDate.getDate() - 30);
+        labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
       } else { // Year
         startDate = new Date(now);
         startDate.setFullYear(startDate.getFullYear() - 1);
+        labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
       }
       
       // Fetch mood entries from database
@@ -56,7 +60,7 @@ const Trends = () => {
       
       if (period === 'Week') {
         // Group by day of week
-        const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
         for (let i = 0; i < 7; i++) {
           const targetDate = new Date(now);
           targetDate.setDate(targetDate.getDate() - (6 - i));
@@ -66,20 +70,19 @@ const Trends = () => {
             return entryDate.toDateString() === targetDate.toDateString();
           }) || [];
           
-          let value: number = 2; // Default to Neutral (2)
+          let value: number = 2; // Default to Neutral
           if (dayEntries.length > 0) {
             const sum = dayEntries.reduce((acc, entry) => acc + (moodValues[entry.mood] || 2), 0);
             value = sum / dayEntries.length;
           }
           
           processedData.push({
-            label: dayLabels[i],
+            label: labels[i],
             value: value
           });
         }
       } else if (period === 'Month') {
         // Group by weeks
-        const weekLabels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
         for (let week = 0; week < 4; week++) {
           const weekStart = new Date(now);
           weekStart.setDate(weekStart.getDate() - (28 - week * 7));
@@ -91,20 +94,19 @@ const Trends = () => {
             return entryDate >= weekStart && entryDate <= weekEnd;
           }) || [];
           
-          let value: number = 2; // Default to Neutral (2)
+          let value: number = 2; // Default to Neutral
           if (weekEntries.length > 0) {
             const sum = weekEntries.reduce((acc, entry) => acc + (moodValues[entry.mood] || 2), 0);
             value = sum / weekEntries.length;
           }
           
           processedData.push({
-            label: weekLabels[week],
+            label: labels[week],
             value: value
           });
         }
       } else { // Year
         // Group by months
-        const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         for (let month = 0; month < 12; month++) {
           const monthStart = new Date(now.getFullYear(), month, 1);
           const monthEnd = new Date(now.getFullYear(), month + 1, 0);
@@ -114,14 +116,14 @@ const Trends = () => {
             return entryDate >= monthStart && entryDate <= monthEnd;
           }) || [];
           
-          let value: number = 2; // Default to Neutral (2)
+          let value: number = 2; // Default to Neutral
           if (monthEntries.length > 0) {
             const sum = monthEntries.reduce((acc, entry) => acc + (moodValues[entry.mood] || 2), 0);
             value = sum / monthEntries.length;
           }
           
           processedData.push({
-            label: monthLabels[month],
+            label: labels[month],
             value: value
           });
         }
@@ -129,7 +131,7 @@ const Trends = () => {
       
       setMoodData(processedData);
       
-      // Calculate insights
+      // Calculate improved insights
       const moodCounts = { happy: 0, neutral: 0, angry: 0, sad: 0 };
       data?.forEach(entry => {
         if (entry.mood in moodCounts) {
@@ -155,9 +157,7 @@ const Trends = () => {
       });
       
     } catch (err) {
-      console.error('Failed to fetch mood trends:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch mood trends');
-      setMoodData([]);
     } finally {
       setLoading(false);
     }
@@ -230,14 +230,14 @@ const Trends = () => {
           <div>
             <div className="relative">
               {/* Left Y-axis labels (moods) */}
-              <div className="absolute left-0 top-0 h-full flex flex-col justify-between text-xs text-app-muted py-2" style={{ marginLeft: '-48px' }}>
+              <div className="absolute left-0 top-0 h-full flex flex-col justify-between text-xs text-app-muted -ml-12 py-2">
                 <span>Happy</span>
                 <span>Neutral</span>
                 <span>Angry</span>
                 <span>Sad</span>
               </div>
               
-              <div style={{ marginLeft: '48px' }}>
+              <div className="ml-12">
               {selectedPeriod === 'Year' ? (
                 // Year view - mobile scrollable, desktop responsive
                 <div className="w-full">
@@ -269,7 +269,7 @@ const Trends = () => {
                           />
                         </svg>
                         
-                        {/* X-axis labels (days only) - fixed width for mobile */}
+                        {/* Labels - fixed width for mobile */}
                         <div className="flex justify-between mt-3 px-2">
                           {moodData.map((point, index) => (
                             <div 
@@ -311,7 +311,7 @@ const Trends = () => {
                       />
                     </svg>
                     
-                    {/* X-axis labels (days only) - responsive grid for desktop */}
+                    {/* Labels - responsive grid for desktop */}
                     <div className="grid grid-cols-12 gap-1 mt-3">
                       {moodData.map((point, index) => (
                         <div 
@@ -324,6 +324,17 @@ const Trends = () => {
                     </div>
                   </div>
                   
+                  {/* Bottom X-axis labels (days only) */}
+                  <div className="flex justify-between mt-3">
+                    {moodData.map((point, index) => (
+                      <span 
+                        key={index} 
+                        className="text-xs text-app-muted font-medium flex-1 text-center transition-colors duration-200"
+                      >
+                        {point.label}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               ) : (
                 // Week and Month views - responsive
@@ -352,7 +363,7 @@ const Trends = () => {
                     />
                   </svg>
 
-                  {/* X-axis labels (days only) */}
+                  {/* Bottom X-axis labels (days only) */}
                   <div className="flex justify-between mt-3">
                     {moodData.map((point, index) => (
                       <span 
