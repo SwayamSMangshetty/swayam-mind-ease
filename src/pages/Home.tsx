@@ -225,6 +225,14 @@ const Home = () => {
             {/* SVG Chart - Responsive */}
             {moodData.length > 0 && (
             <div className="relative w-full">
+              {/* Left Y-axis labels (moods) */}
+              <div className="absolute left-0 top-0 h-full flex flex-col justify-between text-xs text-app-muted py-2" style={{ marginLeft: '-48px' }}>
+                <span>Happy</span>
+                <span>Neutral</span>
+                <span>Angry</span>
+                <span>Sad</span>
+              </div>
+              
               <div className="w-full overflow-hidden">
                 <svg 
                   viewBox="0 0 320 60" 
@@ -250,15 +258,7 @@ const Home = () => {
                 </svg>
               </div>
               
-              {/* Y-axis labels */}
-              <div className="flex justify-between mt-2 text-xs text-app-muted">
-                <span>Sad</span>
-                <span>Angry</span>
-                <span>Neutral</span>
-                <span>Happy</span>
-              </div>
-
-              {/* Day labels */}
+              {/* X-axis labels (days only) */}
               <div className="flex justify-between mt-2 px-1">
                 {moodData.map((data, index) => (
                   <span key={index} className="text-xs text-app-muted flex-1 text-center transition-colors duration-200">
