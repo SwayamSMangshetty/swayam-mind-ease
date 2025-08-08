@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useEffect } from 'react';
-import { Plus, Search, Calendar, Filter, MoreVert, Heart, Download, Trash2 } from 'lucide-react';
+import { Plus, Search, Calendar, Filter, MoreVertical as MoreVert, Heart, Download, Trash2 } from 'lucide-react';
 import NewEntryModal from '../components/Journal/NewEntryModal';
 import ViewEntryModal from '../components/Journal/ViewEntryModal';
 import EditEntryModal from '../components/Journal/EditEntryModal';
@@ -358,19 +358,6 @@ const Journal = () => {
               onClick={() => setOpenMenuId(null)}
             />
           )}
-        </div>
-      </div>
-
-                    e.stopPropagation();
-                    exportEntry(entry);
-                  }}
-                  className="w-full mt-2 px-3 py-1 text-xs bg-primary/10 text-primary rounded hover:bg-primary/20 transition-colors duration-200"
-                >
-                  Export
-                </button>
-              </div>
-            ))}
-          </div>
         </div>
       </div>
 
