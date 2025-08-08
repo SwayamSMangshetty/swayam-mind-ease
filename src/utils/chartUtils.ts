@@ -1,29 +1,25 @@
 export const moodValues: { [key: string]: number } = {
-  'happy': 9,
-  'neutral': 6,
-  'sad': 3,
-  'angry': 2,
-  'overwhelmed': 1,
-  'excited': 10,
-  'anxious': 4,
-  'calm': 7
+  'happy': 3,
+  'neutral': 2,
+  'angry': 1,
+  'sad': 0
 };
 
 export interface ChartDataPoint {
   label: string;
-  value: number | null;
+  value: number;
 }
 
-// Generate SVG path for curved line, handling null values
+// Generate SVG path for curved line
 export const generatePath = (data: ChartDataPoint[], width: number, height: number): string => {
-  const maxValue = 10;
+  const maxValue = 3;
   const stepX = width / (data.length - 1);
   
   let path = '';
   
   data.forEach((point, index) => {
     const x = index * stepX;
-    const y = height - ((point.value || 6) / maxValue) * height;
+    const y = height - (point.value / maxValue) * height;
     
     if (index === 0) {
       path += `M ${x} ${y}`;
@@ -35,9 +31,9 @@ export const generatePath = (data: ChartDataPoint[], width: number, height: numb
   return path;
 };
 
-// Generate filled path for area chart, handling null values
+// Generate filled path for area chart
 export const generateFilledPath = (data: ChartDataPoint[], width: number, height: number): string => {
-  const maxValue = 10;
+  const maxValue = 3;
   const stepX = width / (data.length - 1);
   
   if (data.length === 0) return '';
@@ -46,7 +42,7 @@ export const generateFilledPath = (data: ChartDataPoint[], width: number, height
   
   data.forEach((point, index) => {
     const x = index * stepX;
-    const y = height - ((point.value || 6) / maxValue) * height;
+    const y = height - (point.value / maxValue) * height;
     path += ` L ${x} ${y}`;
   });
   
@@ -58,7 +54,7 @@ export const generateFilledPath = (data: ChartDataPoint[], width: number, height
 
 // Calculate insights from mood data
 export const calculateInsights = (data: ChartDataPoint[], period: string) => {
-  const validData = data.filter(point => point.value !== null);
+  const validData = data.filter(point => point.value !== 2);
   
   if (validData.length === 0) {
     return {
@@ -68,18 +64,18 @@ export const calculateInsights = (data: ChartDataPoint[], period: string) => {
     };
   }
   
-  const average = validData.reduce((sum, point) => sum + point.value!, 0) / validData.length;
+  const average = validData.reduce((sum, point) => sum + point.value, 0) / validData.length;
   const bestPoint = validData.reduce((best, current) => 
-    current.value! > best.value! ? current : best
+    current.value > best.value ? current : best
   );
   const worstPoint = validData.reduce((worst, current) => 
-    current.value! < worst.value! ? current : worst
+    current.value < worst.value ? current : worst
   );
   
   let overallMessage = '';
-  if (average >= 7) {
+  if (average >= 2.5) {
     overallMessage = `Your mood has been consistently positive this ${period.toLowerCase()}.`;
-  } else if (average >= 5) {
+  } else if (average >= 1.5) {
     overallMessage = `Your mood has been moderate this ${period.toLowerCase()}.`;
   } else {
     overallMessage = `Your mood has been challenging this ${period.toLowerCase()}.`;

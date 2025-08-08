@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useEffect } from 'react';
-import { Plus, Search, Calendar, Filter } from 'lucide-react';
+import { Plus, Search, Calendar, Filter, MoreVert, Heart, Download, Trash2 } from 'lucide-react';
 import NewEntryModal from '../components/Journal/NewEntryModal';
 import ViewEntryModal from '../components/Journal/ViewEntryModal';
 import EditEntryModal from '../components/Journal/EditEntryModal';
@@ -17,6 +17,10 @@ const Journal = () => {
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
   const [filteredEntries, setFilteredEntries] = useState<JournalEntry[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [moodFilter, setMoodFilter] = useState<string>('all');
+  const [dateFilter, setDateFilter] = useState<string>('');
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,7 +37,7 @@ const Journal = () => {
 
       if (error) throw error;
       setJournalEntries(data || []);
-      setFilteredEntries(data || []);
+      applyFilters(data || [], searchTerm, moodFilter, dateFilter);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch journal entries');
     } finally {
@@ -46,6 +50,33 @@ const Journal = () => {
       fetchJournalEntries();
     }
   }, [user]);
+
+  const applyFilters = (entries: JournalEntry[], search: string, mood: string, date: string) => {
+    let filtered = entries;
+    
+    // Filter by search term (title only)
+    if (search) {
+      filtered = filtered.filter(entry =>
+        entry.title.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+    
+    // Filter by mood
+    if (mood !== 'all') {
+      filtered = filtered.filter(entry => entry.mood === mood);
+    }
+    
+    // Filter by date
+    if (date) {
+      filtered = filtered.filter(entry => {
+        const entryDate = new Date(entry.created_at).toDateString();
+        const filterDate = new Date(date).toDateString();
+        return entryDate === filterDate;
+      });
+    }
+    
+    setFilteredEntries(filtered);
+  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -93,23 +124,43 @@ const Journal = () => {
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const term = e.target.value.toLowerCase();
     setSearchTerm(term);
-    
-    if (!term) {
-      setFilteredEntries(journalEntries);
+    applyFilters(journalEntries, term, moodFilter, dateFilter);
+  };
+
+  const handleMoodFilter = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const mood = e.target.value;
+    setMoodFilter(mood);
+    applyFilters(journalEntries, searchTerm, mood, dateFilter);
+  };
+
+  const handleDateFilter = () => {
+    const date = prompt('Enter date (YYYY-MM-DD):');
+    if (date) {
+      setDateFilter(date);
+      applyFilters(journalEntries, searchTerm, moodFilter, date);
     } else {
-      const filtered = journalEntries.filter(entry =>
-        entry.title.toLowerCase().includes(term) ||
-        entry.content.toLowerCase().includes(term)
-      );
-      setFilteredEntries(filtered);
+      setDateFilter('');
+      applyFilters(journalEntries, searchTerm, moodFilter, '');
     }
   };
 
-  const handleExport = () => {
-    // Moved to exportEntry function
+  const toggleFavorite = (entryId: string) => {
+    const newFavorites = new Set(favorites);
+    if (newFavorites.has(entryId)) {
+      newFavorites.delete(entryId);
+    } else {
+      newFavorites.add(entryId);
+    }
+    setFavorites(newFavorites);
+    setOpenMenuId(null);
+  };
+
+  const handleMenuToggle = (entryId: string) => {
+    setOpenMenuId(openMenuId === entryId ? null : entryId);
   };
 
   const exportEntry = (entry: JournalEntry) => {
+    setOpenMenuId(null);
     const csvContent = [
       ['Title', 'Content', 'Mood', 'Created Date', 'Updated Date'],
       [
@@ -130,6 +181,24 @@ const Journal = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const confirmDelete = async (entry: JournalEntry) => {
+    if (window.confirm('Are you sure you want to delete this entry?')) {
+      try {
+        const { error } = await supabase
+          .from('journal_entries')
+          .delete()
+          .eq('id', entry.id)
+          .eq('user_id', user?.id);
+
+        if (error) throw error;
+        fetchJournalEntries();
+        setOpenMenuId(null);
+      } catch (err) {
+        console.error('Failed to delete entry:', err);
+      }
+    }
   };
 
   return (
@@ -160,12 +229,23 @@ const Journal = () => {
               className="flex-1 px-3 py-2 text-sm border border-app-muted bg-app-light text-app placeholder-app-muted rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
             />
             <div className="flex gap-2">
-              <button className="p-2 border border-app-muted bg-app-light rounded-lg hover:bg-app-dark transition-all duration-200 active:scale-95">
-              <Filter size={16} className="text-app-muted" />
-            </button>
-            <button className="p-2 border border-app-muted bg-app-light rounded-lg hover:bg-app-dark transition-all duration-200 active:scale-95 shadow-sm hover:shadow-md">
-              <Calendar size={16} className="text-app-muted" />
-            </button>
+              <select
+                value={moodFilter}
+                onChange={handleMoodFilter}
+                className="p-2 border border-app-muted bg-app-light text-app rounded-lg focus:ring-2 focus:ring-primary transition-all duration-200 text-sm"
+              >
+                <option value="all">All Moods</option>
+                <option value="happy">Happy</option>
+                <option value="neutral">Neutral</option>
+                <option value="sad">Sad</option>
+                <option value="angry">Angry</option>
+              </select>
+              <button 
+                onClick={handleDateFilter}
+                className="p-2 border border-app-muted bg-app-light rounded-lg hover:bg-app-dark transition-all duration-200 active:scale-95 shadow-sm hover:shadow-md"
+              >
+                <Calendar size={16} className="text-app-muted" />
+              </button>
             </div>
           </div>
         </div>
@@ -187,15 +267,29 @@ const Journal = () => {
             </div>
           )}
 
+          {/* No entries for selected date */}
+          {dateFilter && filteredEntries.length === 0 && !loading && (
+            <div className="text-center py-8 bg-app-light rounded-lg border border-app-muted mx-auto max-w-md">
+              <p className="text-app-muted">No entries for this date.</p>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 max-w-7xl mx-auto">
-            {journalEntries.map((entry) => (
+            {filteredEntries.map((entry) => (
               <div
                 key={entry.id}
-                className="bg-app-light rounded-xl p-4 shadow-sm border border-app-muted hover:shadow-md hover:border-primary/50 transition-all duration-200 cursor-pointer active:scale-[0.98]"
+                className="bg-app-light rounded-xl p-4 shadow-sm border border-app-muted hover:shadow-md hover:border-primary/50 transition-all duration-200 cursor-pointer active:scale-[0.98] relative"
               >
                 <div onClick={() => handleEntryClick(entry)} className="flex justify-between items-start mb-2">
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-app mb-1 text-sm truncate transition-colors duration-200">{entry.title || 'Untitled'}</h3>
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-semibold text-app text-sm truncate transition-colors duration-200 flex-1">
+                        {entry.title || 'Untitled'}
+                      </h3>
+                      {favorites.has(entry.id) && (
+                        <Heart size={12} className="text-warning fill-current" />
+                      )}
+                    </div>
                     <p className="text-xs text-app-muted mb-2 transition-colors duration-200">{formatDate(entry.created_at)}</p>
                     <p className="text-app-muted text-sm leading-relaxed line-clamp-2 transition-colors duration-200">{entry.content.substring(0, 100)}...</p>
                   </div>
@@ -204,8 +298,69 @@ const Journal = () => {
                     entry.mood === 'neutral' ? 'bg-warning' : 'bg-info'
                   }`} />
                 </div>
-                <button
-                  onClick={(e) => {
+                
+                {/* Three-dots menu */}
+                <div className="absolute top-2 right-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleMenuToggle(entry.id);
+                    }}
+                    className="p-1 hover:bg-app-dark rounded-full transition-colors duration-200"
+                  >
+                    <MoreVert size={16} className="text-app-muted" />
+                  </button>
+                  
+                  {/* Dropdown menu */}
+                  {openMenuId === entry.id && (
+                    <div className="absolute right-0 top-8 bg-app-light border border-app-muted rounded-lg shadow-lg z-10 min-w-[120px]">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleFavorite(entry.id);
+                        }}
+                        className="w-full px-3 py-2 text-left hover:bg-app-dark transition-colors duration-200 flex items-center gap-2 text-sm"
+                      >
+                        <Heart size={14} className={favorites.has(entry.id) ? 'text-warning fill-current' : 'text-app-muted'} />
+                        Favorite
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          exportEntry(entry);
+                        }}
+                        className="w-full px-3 py-2 text-left hover:bg-app-dark transition-colors duration-200 flex items-center gap-2 text-sm"
+                      >
+                        <Download size={14} className="text-app-muted" />
+                        Export
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          confirmDelete(entry);
+                        }}
+                        className="w-full px-3 py-2 text-left hover:bg-danger/10 transition-colors duration-200 flex items-center gap-2 text-sm text-danger"
+                      >
+                        <Trash2 size={14} className="text-danger" />
+                        Delete
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Click away handler for menus */}
+          {openMenuId && (
+            <div 
+              className="fixed inset-0 z-5"
+              onClick={() => setOpenMenuId(null)}
+            />
+          )}
+        </div>
+      </div>
+
                     e.stopPropagation();
                     exportEntry(entry);
                   }}
@@ -220,7 +375,7 @@ const Journal = () => {
       </div>
 
       {/* Empty State (when no entries) */}
-      {journalEntries.length === 0 && !loading && (
+      {filteredEntries.length === 0 && !loading && !dateFilter && (
         <div className="flex flex-col items-center justify-center py-16 px-6">
           <div className="bg-app-light rounded-2xl p-8 border border-app-muted shadow-sm max-w-md mx-auto text-center">
             <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4 mx-auto transition-colors duration-200">

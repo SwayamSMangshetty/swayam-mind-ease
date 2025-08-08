@@ -14,6 +14,7 @@ const Home = () => {
   const [moodData, setMoodData] = useState<ChartDataPoint[]>([]);
   const [loading, setLoading] = useState(false);
   const [savingMood, setSavingMood] = useState(false);
+  const [moodSubmittedToday, setMoodSubmittedToday] = useState(false);
 
   const moodOptions = [
     { icon: Smile, label: 'Happy', value: 'happy', color: 'text-green-500 dark:text-green-400' },
@@ -48,6 +49,14 @@ const Home = () => {
 
       if (error) throw error;
 
+      // Check if mood was submitted today
+      const today = new Date();
+      const todayEntries = data?.filter(entry => {
+        const entryDate = new Date(entry.created_at);
+        return entryDate.toDateString() === today.toDateString();
+      }) || [];
+      setMoodSubmittedToday(todayEntries.length > 0);
+
       // Generate last 7 days with real data
       const chartData = [];
       const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -63,7 +72,7 @@ const Home = () => {
           return entryDate.toDateString() === date.toDateString();
         }) || [];
         
-        let value: number | null = null;
+        let value: number = 2; // Default to Neutral
         if (dayEntries.length > 0) {
           // Calculate average mood for the day if multiple entries exist
           const sum = dayEntries.reduce((acc, entry) => acc + (moodValues[entry.mood] || 6), 0);
@@ -73,7 +82,7 @@ const Home = () => {
         chartData.push({
           day: dayName,
           label: dayName,
-          value: value !== null ? value : 6
+          value: value
         });
       }
       
@@ -100,6 +109,14 @@ const Home = () => {
       return;
     }
 
+    if (moodSubmittedToday) {
+      showError(
+        'Mood Already Recorded',
+        'Mood for today already recorded.'
+      );
+      return;
+    }
+
     if (savingMood) return;
 
     try {
@@ -114,6 +131,9 @@ const Home = () => {
         });
 
       if (error) throw error;
+
+      // Update state to indicate mood was submitted today
+      setMoodSubmittedToday(true);
 
       // Refresh mood data after saving
       await fetchRecentMoods();
@@ -173,8 +193,10 @@ const Home = () => {
                 <button
                   key={mood.value}
                   onClick={() => handleMoodSelect(mood.value)}
-                  className="flex items-center gap-2 p-3 bg-app-light rounded-lg border border-app-muted hover:border-primary hover:shadow-md transition-all duration-200 active:scale-[0.98] disabled:opacity-50 shadow-sm hover:bg-primary/10"
-                  disabled={savingMood}
+                  className={`flex items-center gap-2 p-3 bg-app-light rounded-lg border border-app-muted hover:border-primary hover:shadow-md transition-all duration-200 active:scale-[0.98] disabled:opacity-50 shadow-sm hover:bg-primary/10 ${
+                    moodSubmittedToday ? 'opacity-50 pointer-events-none' : ''
+                  }`}
+                  disabled={savingMood || moodSubmittedToday}
                 >
                   <Icon size={20} className={`${mood.color} flex-shrink-0`} />
                   <span className="text-app font-medium text-sm truncate transition-colors duration-200">
@@ -228,6 +250,14 @@ const Home = () => {
                 </svg>
               </div>
               
+              {/* Y-axis labels */}
+              <div className="flex justify-between mt-2 text-xs text-app-muted">
+                <span>Sad</span>
+                <span>Angry</span>
+                <span>Neutral</span>
+                <span>Happy</span>
+              </div>
+
               {/* Day labels */}
               <div className="flex justify-between mt-2 px-1">
                 {moodData.map((data, index) => (

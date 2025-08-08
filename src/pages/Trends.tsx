@@ -12,9 +12,9 @@ const Trends = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('Week');
   const [moodData, setMoodData] = useState<ChartDataPoint[]>([]);
   const [insights, setInsights] = useState({
-    overall: '',
-    best: '',
-    challenging: ''
+    mostFrequent: '',
+    streak: '',
+    journalCount: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -70,15 +70,15 @@ const Trends = () => {
             return entryDate.toDateString() === targetDate.toDateString();
           }) || [];
           
-          let value: number | null = null;
+          let value: number = 2; // Default to Neutral
           if (dayEntries.length > 0) {
-            const sum = dayEntries.reduce((acc, entry) => acc + (moodValues[entry.mood] || 6), 0);
+            const sum = dayEntries.reduce((acc, entry) => acc + (moodValues[entry.mood] || 2), 0);
             value = sum / dayEntries.length;
           }
           
           processedData.push({
             label: labels[i],
-            value: value !== null ? value : 6
+            value: value
           });
         }
       } else if (period === 'Month') {
@@ -94,15 +94,15 @@ const Trends = () => {
             return entryDate >= weekStart && entryDate <= weekEnd;
           }) || [];
           
-          let value: number | null = null;
+          let value: number = 2; // Default to Neutral
           if (weekEntries.length > 0) {
-            const sum = weekEntries.reduce((acc, entry) => acc + (moodValues[entry.mood] || 6), 0);
+            const sum = weekEntries.reduce((acc, entry) => acc + (moodValues[entry.mood] || 2), 0);
             value = sum / weekEntries.length;
           }
           
           processedData.push({
             label: labels[week],
-            value: value !== null ? value : 6
+            value: value
           });
         }
       } else { // Year
@@ -116,21 +116,45 @@ const Trends = () => {
             return entryDate >= monthStart && entryDate <= monthEnd;
           }) || [];
           
-          let value: number | null = null;
+          let value: number = 2; // Default to Neutral
           if (monthEntries.length > 0) {
-            const sum = monthEntries.reduce((acc, entry) => acc + (moodValues[entry.mood] || 6), 0);
+            const sum = monthEntries.reduce((acc, entry) => acc + (moodValues[entry.mood] || 2), 0);
             value = sum / monthEntries.length;
           }
           
           processedData.push({
             label: labels[month],
-            value: value !== null ? value : 6
+            value: value
           });
         }
       }
       
       setMoodData(processedData);
-      setInsights(calculateInsights(processedData, period));
+      
+      // Calculate improved insights
+      const moodCounts = { happy: 0, neutral: 0, angry: 0, sad: 0 };
+      data?.forEach(entry => {
+        if (entry.mood in moodCounts) {
+          moodCounts[entry.mood as keyof typeof moodCounts]++;
+        }
+      });
+      
+      const mostFrequent = Object.entries(moodCounts).reduce((a, b) => 
+        moodCounts[a[0] as keyof typeof moodCounts] > moodCounts[b[0] as keyof typeof moodCounts] ? a : b
+      )[0];
+      
+      // Get journal count
+      const { data: journalData } = await supabase
+        .from('journal_entries')
+        .select('id')
+        .eq('user_id', user.id)
+        .gte('created_at', startDate.toISOString());
+      
+      setInsights({
+        mostFrequent: `Most frequent mood this ${period.toLowerCase()}: ${mostFrequent.charAt(0).toUpperCase() + mostFrequent.slice(1)}`,
+        streak: `Mood entries this ${period.toLowerCase()}: ${data?.length || 0}`,
+        journalCount: `Journal entries this ${period.toLowerCase()}: ${journalData?.length || 0}`
+      });
       
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch mood trends');
@@ -150,7 +174,7 @@ const Trends = () => {
   const chartHeight = 120;
 
   // Calculate average mood for display
-  const validMoodData = moodData.filter(item => item.value !== null);
+  const validMoodData = moodData.filter(item => item.value !== 2);
   const averageMood = validMoodData.length > 0 
     ? validMoodData.reduce((sum, item) => sum + item.value!, 0) / validMoodData.length 
     : 0;
@@ -318,6 +342,14 @@ const Trends = () => {
                     />
                   </svg>
                   
+                  {/* Y-axis labels */}
+                  <div className="flex justify-between mt-2 text-xs text-app-muted">
+                    <span>Sad</span>
+                    <span>Angry</span>
+                    <span>Neutral</span>
+                    <span>Happy</span>
+                  </div>
+
                   {/* Labels */}
                   <div className="flex justify-between mt-3">
                     {moodData.map((point, index) => (
@@ -343,11 +375,6 @@ const Trends = () => {
           )}
           
           {/* No Data Available */}
-          {!loading && validMoodData.length === 0 && moodData.length > 0 && (
-            <div className="text-center py-8 bg-app-light rounded-lg border border-app-muted mx-auto max-w-md p-6">
-              <p className="text-app-muted">No mood entries found for this period. Start tracking your mood to see trends!</p>
-            </div>
-          )}
 
           {/* Period Selector */}
           <div>
@@ -370,41 +397,41 @@ const Trends = () => {
           </div>
 
           {/* Insights */}
-          {!loading && insights.overall && (
+          {!loading && insights.mostFrequent && (
           <div>
             <h3 className="text-xl font-bold text-app mb-4 transition-colors duration-200">Insights</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Overall Mood */}
+              {/* Most Frequent Mood */}
               <div className="flex items-start gap-3 p-4 bg-app-light rounded-lg border border-app-muted transition-colors duration-200 shadow-sm hover:shadow-md">
                 <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors duration-200">
                   <Smile size={18} className="text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="font-semibold text-app mb-1 text-sm transition-colors duration-200">Overall Mood</h4>
-                  <p className="text-app-muted text-xs transition-colors duration-200">{insights.overall}</p>
+                  <h4 className="font-semibold text-app mb-1 text-sm transition-colors duration-200">Most Frequent</h4>
+                  <p className="text-app-muted text-xs transition-colors duration-200">{insights.mostFrequent}</p>
                 </div>
               </div>
 
-              {/* Best Period */}
+              {/* Mood Streak */}
               <div className="flex items-start gap-3 p-4 bg-app-light rounded-lg border border-app-muted transition-colors duration-200 shadow-sm hover:shadow-md">
                 <div className="w-10 h-10 bg-warning/10 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors duration-200">
                   <Sun size={18} className="text-warning" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="font-semibold text-app mb-1 text-sm transition-colors duration-200">Best Period</h4>
-                  <p className="text-app-muted text-xs transition-colors duration-200">{insights.best}</p>
+                  <h4 className="font-semibold text-app mb-1 text-sm transition-colors duration-200">Activity</h4>
+                  <p className="text-app-muted text-xs transition-colors duration-200">{insights.streak}</p>
                 </div>
               </div>
 
-              {/* Challenging Period */}
+              {/* Journal Count */}
               <div className="flex items-start gap-3 p-4 bg-app-light rounded-lg border border-app-muted transition-colors duration-200 shadow-sm hover:shadow-md">
                 <div className="w-10 h-10 bg-info/10 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors duration-200">
                   <Cloud size={18} className="text-info" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="font-semibold text-app mb-1 text-sm transition-colors duration-200">Challenging Period</h4>
-                  <p className="text-app-muted text-xs transition-colors duration-200">{insights.challenging}</p>
+                  <h4 className="font-semibold text-app mb-1 text-sm transition-colors duration-200">Journaling</h4>
+                  <p className="text-app-muted text-xs transition-colors duration-200">{insights.journalCount}</p>
                 </div>
               </div>
             </div>

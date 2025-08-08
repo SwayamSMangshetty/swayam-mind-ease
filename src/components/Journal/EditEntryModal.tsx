@@ -169,7 +169,7 @@ const EditEntryModal: React.FC<EditEntryModalProps> = ({ entry, onClose, onSave,
               value={content}
               onChange={(e) => setContent(e.target.value)}
               className="w-full h-64 p-3 bg-app-dark text-app placeholder-app-muted rounded-lg border-none outline-none resize-none text-sm transition-colors duration-200 focus:ring-2 focus:ring-primary shadow-sm"
-              placeholder="Entry Title"
+              placeholder="Express your thoughts…"
               disabled={saving || deleting}
             />
           </div>
