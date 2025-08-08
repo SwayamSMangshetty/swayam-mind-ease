@@ -289,18 +289,13 @@ const Home = () => {
                   onClick={() => navigate(action.path)}
                   className="flex items-center gap-3 p-4 bg-app-light rounded-lg border border-app-muted hover:border-primary hover:shadow-md transition-all duration-200 active:scale-[0.98] shadow-sm hover:bg-primary/10"
                 >
-                  <Icon size={20} className="text-primary flex-shrink-0" />
-                  <span className="text-app font-medium transition-colors duration-200">{action.label}</span>
+                  <Icon size={20} className="text-app-muted flex-shrink-0 transition-colors duration-200" />
+                  <span className="text-app font-medium text-sm transition-colors duration-200">{action.label}</span>
                 </button>
               );
             })}
           </div>
         </div>
-
-          {/* Chart with proper axis layout */}
-          {moodData.length > 0 && (
-            <div></div>
-          )}
         </div>
       </div>
     </div>
