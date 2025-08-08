@@ -229,6 +229,15 @@ const Trends = () => {
           {!loading && moodData.length > 0 && (
           <div>
             <div className="relative">
+              {/* Left Y-axis labels (moods) */}
+              <div className="absolute left-0 top-0 h-full flex flex-col justify-between text-xs text-app-muted -ml-12 py-2">
+                <span>Happy</span>
+                <span>Neutral</span>
+                <span>Angry</span>
+                <span>Sad</span>
+              </div>
+              
+              <div className="ml-12">
               {selectedPeriod === 'Year' ? (
                 // Year view - mobile scrollable, desktop responsive
                 <div className="w-full">
@@ -314,6 +323,18 @@ const Trends = () => {
                       ))}
                     </div>
                   </div>
+                  
+                  {/* Bottom X-axis labels (days only) */}
+                  <div className="flex justify-between mt-3">
+                    {moodData.map((point, index) => (
+                      <span 
+                        key={index} 
+                        className="text-xs text-app-muted font-medium flex-1 text-center transition-colors duration-200"
+                      >
+                        {point.label}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               ) : (
                 // Week and Month views - responsive
@@ -341,16 +362,8 @@ const Trends = () => {
                       strokeLinejoin="round"
                     />
                   </svg>
-                  
-                  {/* Y-axis labels */}
-                  <div className="flex justify-between mt-2 text-xs text-app-muted">
-                    <span>Sad</span>
-                    <span>Angry</span>
-                    <span>Neutral</span>
-                    <span>Happy</span>
-                  </div>
 
-                  {/* Labels */}
+                  {/* Bottom X-axis labels (days only) */}
                   <div className="flex justify-between mt-3">
                     {moodData.map((point, index) => (
                       <span 
@@ -363,6 +376,7 @@ const Trends = () => {
                   </div>
                 </div>
               )}
+              </div>
             </div>
           </div>
           )}

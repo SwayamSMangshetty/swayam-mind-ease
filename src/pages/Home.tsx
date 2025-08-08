@@ -281,23 +281,10 @@ const Home = () => {
         <div>
           <h2 className="text-xl font-bold text-app mb-4 text-center transition-colors duration-200">Quick Actions</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 max-w-4xl mx-auto">
-            {quickActions.map((action) => {
-              const Icon = action.icon;
-              return (
-                <button
-                  key={action.path}
-                  onClick={() => navigate(action.path)}
-                  className="flex items-center gap-3 p-4 bg-app-light rounded-lg border border-app-muted hover:border-primary hover:shadow-md transition-all duration-200 active:scale-[0.98] shadow-sm hover:bg-primary/10"
-                >
-                  <Icon size={20} className="text-app-muted flex-shrink-0 transition-colors duration-200" />
-                  <span className="text-app font-medium text-sm transition-colors duration-200">{action.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-        </div>
-      </div>
+
+          {/* Chart with proper axis layout */}
+          {moodData.length > 0 && (
+    </div>
     </div>
   );
 };

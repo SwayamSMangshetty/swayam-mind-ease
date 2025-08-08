@@ -23,6 +23,8 @@ const Journal = () => {
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const fetchJournalEntries = async () => {
     if (!user) return;
@@ -134,14 +136,7 @@ const Journal = () => {
   };
 
   const handleDateFilter = () => {
-    const date = prompt('Enter date (YYYY-MM-DD):');
-    if (date) {
-      setDateFilter(date);
-      applyFilters(journalEntries, searchTerm, moodFilter, date);
-    } else {
-      setDateFilter('');
-      applyFilters(journalEntries, searchTerm, moodFilter, '');
-    }
+    setShowDatePicker(true);
   };
 
   const toggleFavorite = (entryId: string) => {
@@ -184,20 +179,23 @@ const Journal = () => {
   };
 
   const confirmDelete = async (entry: JournalEntry) => {
-    if (window.confirm('Are you sure you want to delete this entry?')) {
-      try {
-        const { error } = await supabase
-          .from('journal_entries')
-          .delete()
-          .eq('id', entry.id)
-          .eq('user_id', user?.id);
+    setShowDeleteConfirm(entry.id);
+  };
 
-        if (error) throw error;
-        fetchJournalEntries();
-        setOpenMenuId(null);
-      } catch (err) {
-        console.error('Failed to delete entry:', err);
-      }
+  const handleConfirmDelete = async (entryId: string) => {
+    try {
+      const { error } = await supabase
+        .from('journal_entries')
+        .delete()
+        .eq('id', entryId)
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+      fetchJournalEntries();
+      setOpenMenuId(null);
+      setShowDeleteConfirm(null);
+    } catch (err) {
+      console.error('Failed to delete entry:', err);
     }
   };
 
@@ -251,6 +249,13 @@ const Journal = () => {
         </div>
       </div>
 
+      {/* No entries for selected mood */}
+      {moodFilter !== 'all' && filteredEntries.length === 0 && !loading && (
+        <div className="text-center py-8 bg-app-light rounded-lg border border-app-muted mx-auto max-w-md">
+          <p className="text-app-muted">No entries found for selected mood.</p>
+        </div>
+      )}
+
       {/* Journal Entries */}
       <div className="p-4">
         <div className="w-full space-y-3">
@@ -282,25 +287,28 @@ const Journal = () => {
               >
                 <div onClick={() => handleEntryClick(entry)} className="flex justify-between items-start mb-2">
                   <div className="flex-1 min-w-0">
+                    {/* Moved mood indicator to left side */}
                     <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold text-app text-sm truncate transition-colors duration-200 flex-1">
+                      <div className={`w-3 h-3 rounded-full flex-shrink-0 ${
+                        entry.mood === 'happy' ? 'bg-success' :
+                        entry.mood === 'neutral' ? 'bg-warning' : 'bg-info'
+                      }`} />
+                    <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-semibold text-app text-sm truncate transition-colors duration-200">
                         {entry.title || 'Untitled'}
                       </h3>
                       {favorites.has(entry.id) && (
                         <Heart size={12} className="text-warning fill-current" />
                       )}
                     </div>
+                    </div>
                     <p className="text-xs text-app-muted mb-2 transition-colors duration-200">{formatDate(entry.created_at)}</p>
                     <p className="text-app-muted text-sm leading-relaxed line-clamp-2 transition-colors duration-200">{entry.content.substring(0, 100)}...</p>
                   </div>
-                  <div className={`w-3 h-3 rounded-full ml-3 mt-1 flex-shrink-0 ${
-                    entry.mood === 'happy' ? 'bg-success' :
-                    entry.mood === 'neutral' ? 'bg-warning' : 'bg-info'
-                  }`} />
                 </div>
                 
                 {/* Three-dots menu */}
-                <div className="absolute top-2 right-2">
+                <div className="absolute top-2 right-2" style={{marginRight: '12px'}}>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -407,6 +415,66 @@ const Journal = () => {
           onSave={handleSaveEdit}
           onDelete={handleDeleteEntry}
         />
+      )}
+
+      {/* Date Picker Modal */}
+      {showDatePicker && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-app-light rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-lg font-semibold text-app mb-4">Select Date</h3>
+            <input
+              type="date"
+              onChange={(e) => {
+                setDateFilter(e.target.value);
+                applyFilters(journalEntries, searchTerm, moodFilter, e.target.value);
+                setShowDatePicker(false);
+              }}
+              className="w-full p-3 bg-app-dark text-app rounded-lg border-none outline-none focus:ring-2 focus:ring-primary mb-4"
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setDateFilter('');
+                  applyFilters(journalEntries, searchTerm, moodFilter, '');
+                  setShowDatePicker(false);
+                }}
+                className="flex-1 py-2 px-4 bg-app-dark text-app rounded-lg hover:bg-app-dark/80 transition-colors"
+              >
+                Clear Filter
+              </button>
+              <button
+                onClick={() => setShowDatePicker(false)}
+                className="flex-1 py-2 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-app-light rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-lg font-semibold text-app mb-4">Confirm Delete</h3>
+            <p className="text-app-muted mb-6">Are you sure you want to delete this entry? This action cannot be undone.</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteConfirm(null)}
+                className="flex-1 py-2 px-4 bg-app-dark text-app rounded-lg hover:bg-app-dark/80 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleConfirmDelete(showDeleteConfirm)}
+                className="flex-1 py-2 px-4 bg-danger text-white rounded-lg hover:bg-danger/90 transition-colors"
+              >
+                Confirm Delete
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
