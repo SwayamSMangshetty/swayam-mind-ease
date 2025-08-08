@@ -14,6 +14,8 @@ const Home = () => {
   const [moodData, setMoodData] = useState<ChartDataPoint[]>([]);
   const [loading, setLoading] = useState(false);
   const [savingMood, setSavingMood] = useState(false);
+  const [moodEnteredToday, setMoodEnteredToday] = useState(false);
+  const [lastMoodDate, setLastMoodDate] = useState<string | null>(null);
 
   const moodOptions = [
     { icon: Smile, label: 'Happy', value: 'happy', color: 'text-green-500 dark:text-green-400' },
@@ -28,6 +30,69 @@ const Home = () => {
     { icon: BarChart3, label: 'Progress', path: '/trends' },
   ];
 
+  // Check if mood was entered today
+  const checkMoodEnteredToday = async () => {
+    if (!isSupabaseConfigured || !user) {
+      return;
+    }
+
+    try {
+      const today = new Date();
+      const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000 - 1);
+
+      const { data, error } = await supabase
+        .from('mood_entries')
+        .select('created_at')
+        .eq('user_id', user.id)
+        .gte('created_at', todayStart.toISOString())
+        .lte('created_at', todayEnd.toISOString())
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        setMoodEnteredToday(true);
+        setLastMoodDate(data[0].created_at);
+        // Store in localStorage for persistence
+        localStorage.setItem('lastMoodDate', data[0].created_at);
+      } else {
+        setMoodEnteredToday(false);
+        setLastMoodDate(null);
+        localStorage.removeItem('lastMoodDate');
+      }
+    } catch (err) {
+      console.error('Failed to check mood entry:', err);
+    }
+  };
+
+  // Check if we need to reset mood buttons based on calendar date
+  const checkMoodReset = () => {
+    const storedLastMoodDate = localStorage.getItem('lastMoodDate');
+    if (!storedLastMoodDate) {
+      setMoodEnteredToday(false);
+      return;
+    }
+
+    const lastMoodDate = new Date(storedLastMoodDate);
+    const today = new Date();
+    
+    // Compare calendar dates (not timestamps)
+    const lastMoodDay = new Date(lastMoodDate.getFullYear(), lastMoodDate.getMonth(), lastMoodDate.getDate());
+    const todayDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+    if (todayDay.getTime() > lastMoodDay.getTime()) {
+      // New day - reset mood buttons
+      setMoodEnteredToday(false);
+      setLastMoodDate(null);
+      localStorage.removeItem('lastMoodDate');
+    } else {
+      // Same day - keep buttons disabled
+      setMoodEnteredToday(true);
+      setLastMoodDate(storedLastMoodDate);
+    }
+  };
   const fetchRecentMoods = async () => {
     if (!isSupabaseConfigured || !user) {
       console.warn('Supabase is not configured. Skipping mood data fetch.');
@@ -87,10 +152,30 @@ const Home = () => {
 
   useEffect(() => {
     if (user) {
+      checkMoodReset();
+      checkMoodEnteredToday();
       fetchRecentMoods();
     }
   }, [user]);
 
+  // Set up midnight reset timer
+  useEffect(() => {
+    const now = new Date();
+    const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    const msUntilMidnight = tomorrow.getTime() - now.getTime();
+
+    const timer = setTimeout(() => {
+      checkMoodReset();
+      // Set up daily interval after first midnight
+      const dailyInterval = setInterval(() => {
+        checkMoodReset();
+      }, 24 * 60 * 60 * 1000);
+
+      return () => clearInterval(dailyInterval);
+    }, msUntilMidnight);
+
+    return () => clearTimeout(timer);
+  }, []);
   const handleMoodSelect = async (mood: string) => {
     if (!isSupabaseConfigured || !user) {
       showError(
@@ -100,7 +185,13 @@ const Home = () => {
       return;
     }
 
-    if (savingMood) return;
+    if (savingMood || moodEnteredToday) {
+      showInfo(
+        'Already Recorded',
+        'Mood for today already recorded. Come back tomorrow!'
+      );
+      return;
+    }
 
     try {
       setSavingMood(true);
@@ -115,6 +206,11 @@ const Home = () => {
 
       if (error) throw error;
 
+      // Update state to disable buttons
+      setMoodEnteredToday(true);
+      const now = new Date().toISOString();
+      setLastMoodDate(now);
+      localStorage.setItem('lastMoodDate', now);
       // Refresh mood data after saving
       await fetchRecentMoods();
       
@@ -173,12 +269,16 @@ const Home = () => {
                 <button
                   key={mood.value}
                   onClick={() => handleMoodSelect(mood.value)}
-                  className="flex items-center gap-2 p-3 bg-app-light rounded-lg border border-app-muted hover:border-primary hover:shadow-md transition-all duration-200 active:scale-[0.98] disabled:opacity-50 shadow-sm hover:bg-primary/10"
-                  disabled={savingMood}
+                  className={`flex items-center gap-2 p-3 bg-app-light rounded-lg border border-app-muted transition-all duration-200 active:scale-[0.98] shadow-sm ${
+                    moodEnteredToday || savingMood 
+                      ? 'opacity-50 cursor-not-allowed' 
+                      : 'hover:border-primary hover:shadow-md hover:bg-primary/10'
+                  }`}
+                  disabled={savingMood || moodEnteredToday}
                 >
                   <Icon size={20} className={`${mood.color} flex-shrink-0`} />
                   <span className="text-app font-medium text-sm truncate transition-colors duration-200">
-                    {savingMood ? 'Saving...' : mood.label}
+                    {savingMood ? 'Saving...' : moodEnteredToday ? 'Recorded' : mood.label}
                   </span>
                 </button>
               );

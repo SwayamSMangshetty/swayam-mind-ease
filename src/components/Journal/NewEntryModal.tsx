@@ -112,7 +112,7 @@ const NewEntryModal: React.FC<NewEntryModalProps> = ({ onClose, onSave }) => {
 
           {/* Text Area */}
           <textarea
-            placeholder="Entry Title"
+            placeholder="Express your thoughts..."
             value={content}
             onChange={(e) => setContent(e.target.value)}
             className="flex-1 w-full p-0 border-none outline-none resize-none bg-transparent text-app placeholder-app-muted leading-relaxed text-sm transition-colors duration-200 focus:ring-0"
@@ -130,25 +130,6 @@ const NewEntryModal: React.FC<NewEntryModalProps> = ({ onClose, onSave }) => {
           >
             {saving ? 'Saving...' : 'Save'}
           </button>
-
-          {/* Bottom Icons */}
-          <div className="flex justify-center gap-4">
-            <button className="p-2 hover:bg-app-dark rounded-full transition-all duration-200 active:scale-95 hover:shadow-sm">
-              <Smile size={20} className="text-app-muted" />
-            </button>
-            <button className="p-2 hover:bg-app-dark rounded-full transition-all duration-200 active:scale-95 hover:shadow-sm">
-              <Copy size={20} className="text-app-muted" />
-            </button>
-            <button className="p-2 hover:bg-app-dark rounded-full transition-all duration-200 active:scale-95 hover:shadow-sm">
-              <Bookmark size={20} className="text-app-muted" />
-            </button>
-            <button className="p-2 hover:bg-app-dark rounded-full transition-all duration-200 active:scale-95 hover:shadow-sm">
-              <Send size={20} className="text-app-muted" />
-            </button>
-            <button className="p-2 hover:bg-app-dark rounded-full transition-all duration-200 active:scale-95 hover:shadow-sm">
-              <Bell size={20} className="text-app-muted" />
-            </button>
-          </div>
         </div>
       </div>
       </div>

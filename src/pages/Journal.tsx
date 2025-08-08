@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useEffect } from 'react';
-import { Plus, Search, Calendar, Filter } from 'lucide-react';
+import { Plus, Search, Calendar, Filter, MoreVertical, Heart, Download, Trash2 } from 'lucide-react';
 import NewEntryModal from '../components/Journal/NewEntryModal';
 import ViewEntryModal from '../components/Journal/ViewEntryModal';
 import EditEntryModal from '../components/Journal/EditEntryModal';
@@ -17,9 +17,24 @@ const Journal = () => {
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
   const [filteredEntries, setFilteredEntries] = useState<JournalEntry[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedMood, setSelectedMood] = useState<string>('');
+  const [selectedDate, setSelectedDate] = useState<string>('');
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showMoodFilter, setShowMoodFilter] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [favoriteEntries, setFavoriteEntries] = useState<Set<string>>(new Set());
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [entryToDelete, setEntryToDelete] = useState<JournalEntry | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Load favorite entries from localStorage
+  useEffect(() => {
+    const storedFavorites = localStorage.getItem('favoriteEntries');
+    if (storedFavorites) {
+      setFavoriteEntries(new Set(JSON.parse(storedFavorites)));
+    }
+  }, []);
   const fetchJournalEntries = async () => {
     if (!user) return;
     
@@ -33,7 +48,7 @@ const Journal = () => {
 
       if (error) throw error;
       setJournalEntries(data || []);
-      setFilteredEntries(data || []);
+      applyFilters(data || [], searchTerm, selectedMood, selectedDate);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch journal entries');
     } finally {
@@ -41,12 +56,42 @@ const Journal = () => {
     }
   };
 
+  const applyFilters = (entries: JournalEntry[], search: string, mood: string, date: string) => {
+    let filtered = entries;
+
+    // Apply search filter (title only, case-insensitive)
+    if (search) {
+      filtered = filtered.filter(entry =>
+        entry.title.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+
+    // Apply mood filter
+    if (mood) {
+      filtered = filtered.filter(entry => entry.mood === mood);
+    }
+
+    // Apply date filter
+    if (date) {
+      filtered = filtered.filter(entry => {
+        const entryDate = new Date(entry.created_at);
+        const selectedDateObj = new Date(date);
+        return entryDate.toDateString() === selectedDateObj.toDateString();
+      });
+    }
+
+    setFilteredEntries(filtered);
+  };
   useEffect(() => {
     if (user) {
       fetchJournalEntries();
     }
   }, [user]);
 
+  // Apply filters whenever search term, mood, or date changes
+  useEffect(() => {
+    applyFilters(journalEntries, searchTerm, selectedMood, selectedDate);
+  }, [journalEntries, searchTerm, selectedMood, selectedDate]);
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -105,8 +150,20 @@ const Journal = () => {
     }
   };
 
-  const handleExport = () => {
-    // Moved to exportEntry function
+  const handleMoodFilter = (mood: string) => {
+    setSelectedMood(mood);
+    setShowMoodFilter(false);
+  };
+
+  const handleDateFilter = (date: string) => {
+    setSelectedDate(date);
+    setShowDatePicker(false);
+  };
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setSelectedMood('');
+    setSelectedDate('');
   };
 
   const exportEntry = (entry: JournalEntry) => {
@@ -132,6 +189,77 @@ const Journal = () => {
     document.body.removeChild(link);
   };
 
+  const toggleFavorite = (entryId: string) => {
+    const newFavorites = new Set(favoriteEntries);
+    if (favoriteEntries.has(entryId)) {
+      newFavorites.delete(entryId);
+    } else {
+      newFavorites.add(entryId);
+    }
+    setFavoriteEntries(newFavorites);
+    localStorage.setItem('favoriteEntries', JSON.stringify([...newFavorites]));
+    setActiveDropdown(null);
+  };
+
+  const handleDeleteClick = (entry: JournalEntry) => {
+    setEntryToDelete(entry);
+    setShowDeleteDialog(true);
+    setActiveDropdown(null);
+  };
+
+  const confirmDelete = async () => {
+    if (!entryToDelete || !user) return;
+
+    try {
+      const { error } = await supabase
+        .from('journal_entries')
+        .delete()
+        .eq('id', entryToDelete.id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      // Remove from favorites if it was favorited
+      const newFavorites = new Set(favoriteEntries);
+      newFavorites.delete(entryToDelete.id);
+      setFavoriteEntries(newFavorites);
+      localStorage.setItem('favoriteEntries', JSON.stringify([...newFavorites]));
+
+      fetchJournalEntries();
+      setShowDeleteDialog(false);
+      setEntryToDelete(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete entry');
+    }
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteDialog(false);
+    setEntryToDelete(null);
+  };
+
+  const moodOptions = [
+    { value: '', label: 'All Moods' },
+    { value: 'happy', label: '😊 Happy' },
+    { value: 'neutral', label: '😐 Neutral' },
+    { value: 'sad', label: '😢 Sad' },
+    { value: 'angry', label: '😠 Angry' },
+  ];
+
+  const getFilterMessage = () => {
+    if (filteredEntries.length === 0 && journalEntries.length > 0) {
+      if (selectedMood && selectedDate) {
+        return `No entries found for ${selectedMood} mood on ${new Date(selectedDate).toLocaleDateString()}`;
+      } else if (selectedMood) {
+        return `No entries found for selected mood: ${selectedMood}`;
+      } else if (selectedDate) {
+        return `No entries found for selected date: ${new Date(selectedDate).toLocaleDateString()}`;
+      } else if (searchTerm) {
+        return `No entries found matching "${searchTerm}"`;
+      }
+    }
+    return null;
+  };
   return (
     <div className="bg-app transition-colors duration-200">
       {/* Header */}
@@ -160,6 +288,8 @@ const Journal = () => {
               className="flex-1 px-3 py-2 text-sm border border-app-muted bg-app-light text-app placeholder-app-muted rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
             />
             <div className="flex gap-2">
+              {/* Mood Filter */}
+              <div className="relative">
               <button className="p-2 border border-app-muted bg-app-light rounded-lg hover:bg-app-dark transition-all duration-200 active:scale-95">
               <Filter size={16} className="text-app-muted" />
             </button>
@@ -209,35 +339,190 @@ const Journal = () => {
                     e.stopPropagation();
                     exportEntry(entry);
                   }}
+                  onClick={() => setShowMoodFilter(!showMoodFilter)}
                   className="w-full mt-2 px-3 py-1 text-xs bg-primary/10 text-primary rounded hover:bg-primary/20 transition-colors duration-200"
                 >
                   Export
                 </button>
+                {showMoodFilter && (
+                  <div className="absolute top-full right-0 mt-2 bg-app-light rounded-lg border border-app-muted shadow-lg z-50 min-w-40">
+                    {moodOptions.map((mood) => (
+                      <button
+                        key={mood.value}
+                        onClick={() => handleMoodFilter(mood.value)}
+                        className={`w-full text-left px-3 py-2 text-sm hover:bg-app-dark transition-colors duration-200 first:rounded-t-lg last:rounded-b-lg ${
+                          selectedMood === mood.value ? 'bg-primary/10 text-primary' : 'text-app'
+                        }`}
+                      >
+                        {mood.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+                  onClick={() => setShowDatePicker(!showDatePicker)}
+
+              {/* Date Filter */}
+              <div className="relative">
+              </div>
+                {showDatePicker && (
+                  <div className="absolute top-full right-0 mt-2 bg-app-light rounded-lg border border-app-muted shadow-lg z-50 p-4">
+                    <input
+                      type="date"
+                      value={selectedDate}
+                      onChange={(e) => handleDateFilter(e.target.value)}
+                      className="px-3 py-2 text-sm border border-app-muted bg-app-dark text-app rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    />
+                  </div>
+                )}
               </div>
             ))}
           </div>
+
+          {/* Active Filters */}
+          {(searchTerm || selectedMood || selectedDate) && (
+            <div className="flex items-center gap-2 mt-3">
+              <span className="text-xs text-app-muted">Filters:</span>
+              {searchTerm && (
+                <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
+                  Search: "{searchTerm}"
+                </span>
+              )}
+              {selectedMood && (
+                <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
+                  Mood: {selectedMood}
+                </span>
+              )}
+              {selectedDate && (
+                <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
+                  Date: {new Date(selectedDate).toLocaleDateString()}
+                </span>
+          {/* Filter Message */}
+          {getFilterMessage() && (
+            <div className="text-center py-8 bg-app-light rounded-lg border border-app-muted mx-auto max-w-md">
+              <p className="text-app-muted text-sm">{getFilterMessage()}</p>
+              <button
+                onClick={clearFilters}
+                className="mt-2 text-primary hover:text-primary/80 text-xs underline"
+              >
+                Clear filters
+              </button>
+            </div>
+          )}
+              )}
+              <button
+            {filteredEntries.map((entry) => (
+                className="text-xs text-app-muted hover:text-primary underline"
+              >
+                Clear all
+              </button>
+            </div>
+          )}
+                    <div className="flex items-start justify-between mb-1">
         </div>
+                      {favoriteEntries.has(entry.id) && (
+                        <Heart size={12} className="text-danger fill-current ml-2 flex-shrink-0" />
+                      )}
+                    </div>
       </div>
 
       {/* Empty State (when no entries) */}
-      {journalEntries.length === 0 && !loading && (
-        <div className="flex flex-col items-center justify-center py-16 px-6">
-          <div className="bg-app-light rounded-2xl p-8 border border-app-muted shadow-sm max-w-md mx-auto text-center">
-            <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4 mx-auto transition-colors duration-200">
+                  <div className="flex items-center gap-1 ml-2">
+                    <div className={`w-3 h-3 rounded-full flex-shrink-0 ${
+                      entry.mood === 'happy' ? 'bg-success' :
+                      entry.mood === 'neutral' ? 'bg-warning' : 
+                      entry.mood === 'sad' ? 'bg-info' :
+                      entry.mood === 'angry' ? 'bg-danger' : 'bg-app-muted'
+                    }`} />
+                    <div className="relative">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveDropdown(activeDropdown === entry.id ? null : entry.id);
+                        }}
+                        className="p-1 hover:bg-app-dark rounded-full transition-colors duration-200"
+                      >
+                        <MoreVertical size={14} className="text-app-muted" />
+                      </button>
+                      
+                      {activeDropdown === entry.id && (
+                        <div className="absolute top-full right-0 mt-1 bg-app-light rounded-lg border border-app-muted shadow-lg z-50 min-w-32">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleFavorite(entry.id);
+                            }}
+                            className="w-full text-left px-3 py-2 text-sm hover:bg-app-dark transition-colors duration-200 first:rounded-t-lg flex items-center gap-2"
+                          >
+                            <Heart size={14} className={favoriteEntries.has(entry.id) ? 'text-danger fill-current' : 'text-app-muted'} />
+                            {favoriteEntries.has(entry.id) ? 'Unfavorite' : 'Favorite'}
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              exportEntry(entry);
+                              setActiveDropdown(null);
+                            }}
+                            className="w-full text-left px-3 py-2 text-sm hover:bg-app-dark transition-colors duration-200 flex items-center gap-2"
+                          >
+                            <Download size={14} className="text-app-muted" />
+                            Export
+      {journalEntries.length === 0 && !loading && !getFilterMessage() && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteClick(entry);
+                            }}
+                            className="w-full text-left px-3 py-2 text-sm hover:bg-app-dark transition-colors duration-200 last:rounded-b-lg flex items-center gap-2 text-danger"
+                          >
+                            <Trash2 size={14} className="text-danger" />
+                            Delete
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
             <Plus size={20} className="text-primary" />
-          </div>
-          <h3 className="text-lg font-semibold text-app mb-2 transition-colors duration-200">Start Your Journal</h3>
-          <p className="text-app-muted text-center mb-6 text-sm transition-colors duration-200">
-            Capture your thoughts, feelings, and daily reflections
-          </p>
-          <button
-            onClick={() => setShowNewEntry(true)}
-            className="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 active:scale-95 shadow-sm hover:shadow-md text-sm"
-          >
             Write First Entry
           </button>
           </div>
         </div>
+      {/* Delete Confirmation Dialog */}
+      {showDeleteDialog && entryToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-app-light rounded-2xl p-6 w-full max-w-sm shadow-xl">
+            <h3 className="text-lg font-semibold text-app mb-3">Delete Entry</h3>
+            <p className="text-app-muted text-sm mb-6">
+              Are you sure you want to delete "{entryToDelete.title || 'Untitled'}"? This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={cancelDelete}
+                className="flex-1 py-2 px-4 bg-app-dark text-app rounded-lg hover:bg-app-dark/80 transition-all duration-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="flex-1 py-2 px-4 bg-danger text-white rounded-lg hover:bg-danger/90 transition-all duration-200"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      )}
+      {/* Backdrop for dropdowns */}
+      {(activeDropdown || showMoodFilter || showDatePicker) && (
+        <div 
+          className="fixed inset-0 z-30" 
+          onClick={() => {
+            setActiveDropdown(null);
+            setShowMoodFilter(false);
+            setShowDatePicker(false);
+          }}
+        />
       )}
 
       {/* New Entry Modal */}

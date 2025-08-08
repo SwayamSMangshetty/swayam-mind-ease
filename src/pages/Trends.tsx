@@ -12,13 +12,82 @@ const Trends = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('Week');
   const [moodData, setMoodData] = useState<ChartDataPoint[]>([]);
   const [insights, setInsights] = useState({
-    overall: '',
-    best: '',
-    challenging: ''
+    mostFrequentMood: '',
+    moodEntriesCount: 0,
+    journalEntriesCount: 0
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const calculateSpecificInsights = async (period: string) => {
+    if (!user) return;
+
+    try {
+      const now = new Date();
+      let startDate: Date;
+      let periodLabel = '';
+      
+      if (period === 'Week') {
+        startDate = new Date(now);
+        startDate.setDate(startDate.getDate() - 7);
+        periodLabel = 'week';
+      } else if (period === 'Month') {
+        startDate = new Date(now);
+        startDate.setDate(startDate.getDate() - 30);
+        periodLabel = 'month';
+      } else { // Year
+        startDate = new Date(now);
+        startDate.setFullYear(startDate.getFullYear() - 1);
+        periodLabel = 'year';
+      }
+
+      // Get mood entries for the period
+      const { data: moodData, error: moodError } = await supabase
+        .from('mood_entries')
+        .select('mood')
+        .eq('user_id', user.id)
+        .gte('created_at', startDate.toISOString());
+
+      if (moodError) throw moodError;
+
+      // Get journal entries for the period
+      const { data: journalData, error: journalError } = await supabase
+        .from('journal_entries')
+        .select('id')
+        .eq('user_id', user.id)
+        .gte('created_at', startDate.toISOString());
+
+      if (journalError) throw journalError;
+
+      // Calculate most frequent mood
+      const moodCounts: { [key: string]: number } = {};
+      moodData?.forEach(entry => {
+        moodCounts[entry.mood] = (moodCounts[entry.mood] || 0) + 1;
+      });
+
+      let mostFrequentMood = 'None';
+      let maxCount = 0;
+      Object.entries(moodCounts).forEach(([mood, count]) => {
+        if (count > maxCount) {
+          maxCount = count;
+          mostFrequentMood = mood.charAt(0).toUpperCase() + mood.slice(1);
+        }
+      });
+
+      setInsights({
+        mostFrequentMood: `Most frequent mood this ${periodLabel}: ${mostFrequentMood}`,
+        moodEntriesCount: moodData?.length || 0,
+        journalEntriesCount: journalData?.length || 0
+      });
+    } catch (err) {
+      console.error('Failed to calculate insights:', err);
+      setInsights({
+        mostFrequentMood: 'Unable to calculate',
+        moodEntriesCount: 0,
+        journalEntriesCount: 0
+      });
+    }
+  };
   const fetchMoodTrends = async (period: string) => {
     if (!user) return;
     
@@ -130,7 +199,7 @@ const Trends = () => {
       }
       
       setMoodData(processedData);
-      setInsights(calculateInsights(processedData, period));
+      await calculateSpecificInsights(period);
       
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch mood trends');
@@ -370,41 +439,41 @@ const Trends = () => {
           </div>
 
           {/* Insights */}
-          {!loading && insights.overall && (
+          {!loading && insights.mostFrequentMood && (
           <div>
             <h3 className="text-xl font-bold text-app mb-4 transition-colors duration-200">Insights</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Overall Mood */}
+              {/* Most Frequent Mood */}
               <div className="flex items-start gap-3 p-4 bg-app-light rounded-lg border border-app-muted transition-colors duration-200 shadow-sm hover:shadow-md">
                 <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors duration-200">
                   <Smile size={18} className="text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="font-semibold text-app mb-1 text-sm transition-colors duration-200">Overall Mood</h4>
-                  <p className="text-app-muted text-xs transition-colors duration-200">{insights.overall}</p>
+                  <h4 className="font-semibold text-app mb-1 text-sm transition-colors duration-200">Most Frequent</h4>
+                  <p className="text-app-muted text-xs transition-colors duration-200">{insights.mostFrequentMood}</p>
                 </div>
               </div>
 
-              {/* Best Period */}
+              {/* Mood Entries Count */}
               <div className="flex items-start gap-3 p-4 bg-app-light rounded-lg border border-app-muted transition-colors duration-200 shadow-sm hover:shadow-md">
                 <div className="w-10 h-10 bg-warning/10 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors duration-200">
                   <Sun size={18} className="text-warning" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="font-semibold text-app mb-1 text-sm transition-colors duration-200">Best Period</h4>
-                  <p className="text-app-muted text-xs transition-colors duration-200">{insights.best}</p>
+                  <h4 className="font-semibold text-app mb-1 text-sm transition-colors duration-200">Mood Entries</h4>
+                  <p className="text-app-muted text-xs transition-colors duration-200">Mood entries this {selectedPeriod.toLowerCase()}: {insights.moodEntriesCount}</p>
                 </div>
               </div>
 
-              {/* Challenging Period */}
+              {/* Journal Entries Count */}
               <div className="flex items-start gap-3 p-4 bg-app-light rounded-lg border border-app-muted transition-colors duration-200 shadow-sm hover:shadow-md">
                 <div className="w-10 h-10 bg-info/10 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors duration-200">
                   <Cloud size={18} className="text-info" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="font-semibold text-app mb-1 text-sm transition-colors duration-200">Challenging Period</h4>
-                  <p className="text-app-muted text-xs transition-colors duration-200">{insights.challenging}</p>
+                  <h4 className="font-semibold text-app mb-1 text-sm transition-colors duration-200">Journal Entries</h4>
+                  <p className="text-app-muted text-xs transition-colors duration-200">Journal entries this {selectedPeriod.toLowerCase()}: {insights.journalEntriesCount}</p>
                 </div>
               </div>
             </div>
