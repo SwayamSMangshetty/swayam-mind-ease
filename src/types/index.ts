@@ -19,6 +19,7 @@ export interface JournalEntry {
   title: string;
   content: string;
   mood?: 'happy' | 'sad' | 'neutral' | 'angry';
+  is_favorite?: boolean;
   created_at: string;
   updated_at: string;
 }

@@ -16,6 +16,8 @@ const Chat = () => {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [isBotTyping, setIsBotTyping] = useState(false);
+  const [typingText, setTypingText] = useState('');
+  const [isDisplayingResponse, setIsDisplayingResponse] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -120,26 +122,16 @@ const Chat = () => {
       // Get AI response
       const botResponseText = await getChatResponse(updatedHistory);
       
+      // Start typing animation
+      setIsBotTyping(false);
+      setIsDisplayingResponse(true);
+      
+      // Display response letter by letter
+      await displayTypingResponse(botResponseText, userMessageData);
+      
       // Add bot response to conversation history
       const newBotMessage: OpenAIChatMessage = { role: 'assistant', content: botResponseText };
       setConversationHistory([...updatedHistory, newBotMessage]);
-      
-      // Save bot response to database
-      const { data: botMessageData, error: botError } = await supabase
-        .from('chat_messages')
-        .insert({
-          user_id: user.id,
-          message: botResponseText,
-          sender: 'bot',
-          response: ''
-        })
-        .select()
-        .single();
-
-      if (botError) throw botError;
-
-      // Add bot response to messages
-      setMessages(prev => [...prev, botMessageData]);
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send message');
@@ -149,8 +141,51 @@ const Chat = () => {
       setConversationHistory(conversationHistory);
     } finally {
       setSending(false);
-      setIsBotTyping(false);
+      setIsDisplayingResponse(false);
+      setTypingText('');
     }
+  };
+
+  const displayTypingResponse = async (fullText: string, userMessage: any) => {
+    return new Promise<void>((resolve) => {
+      let currentText = '';
+      let index = 0;
+      
+      const typeNextCharacter = async () => {
+        if (index < fullText.length) {
+          currentText += fullText[index];
+          setTypingText(currentText);
+          index++;
+          setTimeout(typeNextCharacter, 30);
+        } else {
+          // Typing complete, save to database
+          try {
+            const { data: botMessageData, error: botError } = await supabase
+              .from('chat_messages')
+              .insert({
+                user_id: user.id,
+                message: fullText,
+                sender: 'bot',
+                response: ''
+              })
+              .select()
+              .single();
+
+            if (botError) throw botError;
+
+            // Add bot response to messages
+            setMessages(prev => [...prev, botMessageData]);
+          } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to save bot message');
+          }
+          
+          setTypingText('');
+          resolve();
+        }
+      };
+      
+      typeNextCharacter();
+    });
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -225,7 +260,7 @@ const Chat = () => {
           ))}
           
           {/* Bot Typing Indicator */}
-          {isBotTyping && (
+          {(isBotTyping || isDisplayingResponse) && (
             <div className="flex justify-start">
               <div className="flex items-start gap-2 max-w-[85%]">
                 {/* Bot Avatar */}
@@ -236,16 +271,27 @@ const Chat = () => {
                 </div>
                 
                 {/* Typing Indicator */}
-                <div className="bg-app-light rounded-2xl px-3 py-2">
-                  <div className="flex items-center gap-1">
-                    <span className="text-app-muted text-sm">MindEase Bot is typing</span>
-                    <div className="flex gap-1">
-                      <div className="w-1 h-1 bg-app-muted rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                      <div className="w-1 h-1 bg-app-muted rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                      <div className="w-1 h-1 bg-app-muted rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                {isBotTyping ? (
+                  <div className="bg-app-light rounded-2xl px-3 py-2">
+                    <div className="flex items-center gap-1">
+                      <span className="text-app-muted text-sm">MindEase Bot is thinking</span>
+                      <div className="flex gap-1 ml-2">
+                        <div className="w-1.5 h-1.5 bg-app-muted rounded-full animate-pulse" style={{ animationDelay: '0ms', animationDuration: '1s' }}></div>
+                        <div className="w-1.5 h-1.5 bg-app-muted rounded-full animate-pulse" style={{ animationDelay: '200ms', animationDuration: '1s' }}></div>
+                        <div className="w-1.5 h-1.5 bg-app-muted rounded-full animate-pulse" style={{ animationDelay: '400ms', animationDuration: '1s' }}></div>
+                      </div>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="bg-app-light rounded-2xl px-3 py-2 text-app">
+                    <div className="text-sm leading-relaxed prose prose-sm prose-slate dark:prose-invert max-w-none">
+                      <div className="whitespace-pre-wrap">
+                        {typingText}
+                        <span className="animate-pulse">|</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -266,15 +312,15 @@ const Chat = () => {
                 onKeyPress={handleKeyPress}
                 placeholder="Type a message..."
                 className="w-full px-3 py-2 bg-app-dark text-app placeholder-app-muted rounded-full border-none outline-none text-sm transition-colors duration-200 focus:ring-2 focus:ring-primary shadow-sm"
-                disabled={sending || loading || isBotTyping}
+                disabled={sending || loading || isBotTyping || isDisplayingResponse}
               />
             </div>
             <button 
               onClick={handleSendMessage}
-              disabled={sending || loading || isBotTyping || !inputMessage.trim()}
+              disabled={sending || loading || isBotTyping || isDisplayingResponse || !inputMessage.trim()}
               className="p-2 text-app-muted hover:text-primary hover:bg-primary/10 rounded-full transition-all duration-200 active:scale-95 disabled:opacity-50"
             >
-              {sending || isBotTyping ? (
+              {sending || isBotTyping || isDisplayingResponse ? (
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
               ) : (
                 <Send size={20} />

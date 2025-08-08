@@ -22,19 +22,11 @@ const Journal = () => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showMoodFilter, setShowMoodFilter] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-  const [favoriteEntries, setFavoriteEntries] = useState<Set<string>>(new Set());
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [entryToDelete, setEntryToDelete] = useState<JournalEntry | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Load favorite entries from localStorage
-  useEffect(() => {
-    const storedFavorites = localStorage.getItem('favoriteEntries');
-    if (storedFavorites) {
-      setFavoriteEntries(new Set(JSON.parse(storedFavorites)));
-    }
-  }, []);
   const fetchJournalEntries = async () => {
     if (!user) return;
     
@@ -42,7 +34,7 @@ const Journal = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from('journal_entries')
-        .select('*')
+        .select('*, is_favorite')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
@@ -189,16 +181,39 @@ const Journal = () => {
     document.body.removeChild(link);
   };
 
-  const toggleFavorite = (entryId: string) => {
-    const newFavorites = new Set(favoriteEntries);
-    if (favoriteEntries.has(entryId)) {
-      newFavorites.delete(entryId);
-    } else {
-      newFavorites.add(entryId);
+  const toggleFavorite = async (entryId: string) => {
+    if (!user) return;
+
+    try {
+      const entry = journalEntries.find(e => e.id === entryId);
+      if (!entry) return;
+
+      const newFavoriteState = !entry.is_favorite;
+      
+      const { error } = await supabase
+        .from('journal_entries')
+        .update({ is_favorite: newFavoriteState })
+        .eq('id', entryId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setJournalEntries(prev => 
+        prev.map(e => 
+          e.id === entryId ? { ...e, is_favorite: newFavoriteState } : e
+        )
+      );
+      setFilteredEntries(prev => 
+        prev.map(e => 
+          e.id === entryId ? { ...e, is_favorite: newFavoriteState } : e
+        )
+      );
+      
+      setActiveDropdown(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update favorite');
     }
-    setFavoriteEntries(newFavorites);
-    localStorage.setItem('favoriteEntries', JSON.stringify([...newFavorites]));
-    setActiveDropdown(null);
   };
 
   const handleDeleteClick = (entry: JournalEntry) => {
@@ -218,12 +233,6 @@ const Journal = () => {
         .eq('user_id', user.id);
 
       if (error) throw error;
-
-      // Remove from favorites if it was favorited
-      const newFavorites = new Set(favoriteEntries);
-      newFavorites.delete(entryToDelete.id);
-      setFavoriteEntries(newFavorites);
-      localStorage.setItem('favoriteEntries', JSON.stringify([...newFavorites]));
 
       fetchJournalEntries();
       setShowDeleteDialog(false);
@@ -402,7 +411,7 @@ const Journal = () => {
                   <div className="flex items-start justify-between mb-1">
                     <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-app mb-1 text-sm truncate transition-colors duration-200">{entry.title || 'Untitled'}</h3>
-                      {favoriteEntries.has(entry.id) && (
+                      {entry.is_favorite && (
                         <Heart size={12} className="text-danger fill-current ml-2 flex-shrink-0" />
                       )}
                     </div>
@@ -433,8 +442,8 @@ const Journal = () => {
                               }}
                               className="w-full text-left px-3 py-2 text-sm hover:bg-app-dark transition-colors duration-200 first:rounded-t-lg flex items-center gap-2"
                             >
-                              <Heart size={14} className={favoriteEntries.has(entry.id) ? 'text-danger fill-current' : 'text-app-muted'} />
-                              {favoriteEntries.has(entry.id) ? 'Unfavorite' : 'Favorite'}
+                              <Heart size={14} className={entry.is_favorite ? 'text-danger fill-current' : 'text-app-muted'} />
+                              {entry.is_favorite ? 'Unfavorite' : 'Favorite'}
                             </button>
                             <button
                               onClick={(e) => {
