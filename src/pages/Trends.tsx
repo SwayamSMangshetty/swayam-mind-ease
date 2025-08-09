@@ -4,7 +4,7 @@ import { ArrowLeft, Smile, Sun, Cloud } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { moodValues, generatePath, generateFilledPath, ChartDataPoint, calculateInsights, generateRolling7DayData } from '../utils/chartUtils';
+import { moodValues, generatePath, generateFilledPath, ChartDataPoint, calculateInsights } from '../utils/chartUtils';
 
 const Trends = () => {
   const navigate = useNavigate();
@@ -103,6 +103,7 @@ const Trends = () => {
       if (period === 'Week') {
         startDate = new Date(now);
         startDate.setDate(startDate.getDate() - 7);
+        labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
       } else if (period === 'Month') {
         startDate = new Date(now);
         startDate.setDate(startDate.getDate() - 30);
@@ -127,12 +128,30 @@ const Trends = () => {
       const processedData: ChartDataPoint[] = [];
       
       if (period === 'Week') {
-        // Use rolling 7-day data
-        const rollingData = generateRolling7DayData(data || []);
-        processedData.push(...rollingData);
+        // Group by day of week
+        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        for (let i = 0; i < 7; i++) {
+          const targetDate = new Date(now);
+          targetDate.setDate(targetDate.getDate() - (6 - i));
+          
+          const dayEntries = data?.filter(entry => {
+            const entryDate = new Date(entry.created_at);
+            return entryDate.toDateString() === targetDate.toDateString();
+          }) || [];
+          
+          let value: number | null = null;
+          if (dayEntries.length > 0) {
+            const sum = dayEntries.reduce((acc, entry) => acc + (moodValues[entry.mood] || 6), 0);
+            value = sum / dayEntries.length;
+          }
+          
+          processedData.push({
+            label: labels[i],
+            value: value !== null ? value : 6
+          });
+        }
       } else if (period === 'Month') {
         // Group by weeks
-        labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
         for (let week = 0; week < 4; week++) {
           const weekStart = new Date(now);
           weekStart.setDate(weekStart.getDate() - (28 - week * 7));
@@ -152,13 +171,11 @@ const Trends = () => {
           
           processedData.push({
             label: labels[week],
-            value: value !== null ? value : 6,
-            day: labels[week]
+            value: value !== null ? value : 6
           });
         }
       } else { // Year
         // Group by months
-        labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         for (let month = 0; month < 12; month++) {
           const monthStart = new Date(now.getFullYear(), month, 1);
           const monthEnd = new Date(now.getFullYear(), month + 1, 0);
@@ -176,8 +193,7 @@ const Trends = () => {
           
           processedData.push({
             label: labels[month],
-            value: value !== null ? value : 6,
-            day: labels[month]
+            value: value !== null ? value : 6
           });
         }
       }
@@ -297,7 +313,7 @@ const Trends = () => {
                               className="text-xs text-app-muted font-medium text-center transition-colors duration-200 flex-shrink-0"
                               style={{ width: `${600 / moodData.length}px` }}
                             >
-                              {point.day || point.label}
+                              {point.label}
                             </div>
                           ))}
                         </div>
@@ -338,7 +354,7 @@ const Trends = () => {
                           key={index} 
                           className="text-xs text-app-muted font-medium text-center transition-colors duration-200"
                         >
-                          {point.day || point.label}
+                          {point.label}
                         </div>
                       ))}
                     </div>
@@ -378,7 +394,7 @@ const Trends = () => {
                         key={index} 
                         className="text-xs text-app-muted font-medium flex-1 text-center transition-colors duration-200"
                       >
-                        {point.day || point.label}
+                        {point.label}
                       </span>
                     ))}
                   </div>

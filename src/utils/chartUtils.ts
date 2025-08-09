@@ -12,45 +12,7 @@ export const moodValues: { [key: string]: number } = {
 export interface ChartDataPoint {
   label: string;
   value: number | null;
-  day?: string;
 }
-
-// Generate rolling 7-day data ending today
-export const generateRolling7DayData = (moodEntries: any[]): ChartDataPoint[] => {
-  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const result: ChartDataPoint[] = [];
-  const today = new Date();
-  
-  for (let i = 6; i >= 0; i--) {
-    const targetDate = new Date(today);
-    targetDate.setDate(targetDate.getDate() - i);
-    const dayName = days[targetDate.getDay()];
-    
-    // Find mood entries for this specific day
-    const dayEntries = moodEntries.filter(entry => {
-      const entryDate = new Date(entry.created_at);
-      return entryDate.toDateString() === targetDate.toDateString();
-    });
-    
-    let value: number;
-    if (dayEntries.length > 0) {
-      // Calculate average mood for the day
-      const sum = dayEntries.reduce((acc, entry) => acc + (moodValues[entry.mood] || 6), 0);
-      value = sum / dayEntries.length;
-    } else {
-      // Default to neutral if no mood entry
-      value = 6; // neutral
-    }
-    
-    result.push({
-      label: dayName,
-      day: dayName,
-      value: value
-    });
-  }
-  
-  return result;
-};
 
 // Generate SVG path for curved line, handling null values
 export const generatePath = (data: ChartDataPoint[], width: number, height: number): string => {
@@ -61,7 +23,7 @@ export const generatePath = (data: ChartDataPoint[], width: number, height: numb
   
   data.forEach((point, index) => {
     const x = index * stepX;
-    const y = height - ((point.value !== null ? point.value : 6) / maxValue) * height;
+    const y = height - ((point.value || 6) / maxValue) * height;
     
     if (index === 0) {
       path += `M ${x} ${y}`;
@@ -84,7 +46,7 @@ export const generateFilledPath = (data: ChartDataPoint[], width: number, height
   
   data.forEach((point, index) => {
     const x = index * stepX;
-    const y = height - ((point.value !== null ? point.value : 6) / maxValue) * height;
+    const y = height - ((point.value || 6) / maxValue) * height;
     path += ` L ${x} ${y}`;
   });
   

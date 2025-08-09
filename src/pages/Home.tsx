@@ -4,7 +4,7 @@ import { Smile, Frown, Meh, Angry, BookOpen, MessageCircle, BarChart3, Settings 
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { MoodEntry } from '../types';
-import { moodValues, generatePath, generateFilledPath, ChartDataPoint, generateRolling7DayData } from '../utils/chartUtils';
+import { moodValues, generatePath, generateFilledPath, ChartDataPoint } from '../utils/chartUtils';
 import { useToast } from '../contexts/ToastContext';
 
 const Home = () => {
@@ -113,8 +113,35 @@ const Home = () => {
 
       if (error) throw error;
 
-      // Use rolling 7-day data generator
-      const chartData = generateRolling7DayData(data || []);
+      // Generate last 7 days with real data
+      const chartData = [];
+      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dayName = days[date.getDay()];
+        
+        // Find all mood entries for this day
+        const dayEntries = data?.filter(entry => {
+          const entryDate = new Date(entry.created_at);
+          return entryDate.toDateString() === date.toDateString();
+        }) || [];
+        
+        let value: number | null = null;
+        if (dayEntries.length > 0) {
+          // Calculate average mood for the day if multiple entries exist
+          const sum = dayEntries.reduce((acc, entry) => acc + (moodValues[entry.mood] || 6), 0);
+          value = sum / dayEntries.length;
+        }
+        
+        chartData.push({
+          day: dayName,
+          label: dayName,
+          value: value !== null ? value : 6
+        });
+      }
+      
       setMoodData(chartData);
     } catch (err) {
       console.error('Failed to fetch mood data:', err);
@@ -305,7 +332,7 @@ const Home = () => {
               <div className="flex justify-between mt-2 px-1">
                 {moodData.map((data, index) => (
                   <span key={index} className="text-xs text-app-muted flex-1 text-center transition-colors duration-200">
-                    {data.day || data.label}
+                    {data.day}
                   </span>
                 ))}
               </div>
