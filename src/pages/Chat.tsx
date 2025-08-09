@@ -16,6 +16,8 @@ const Chat = () => {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [isBotTyping, setIsBotTyping] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [streamingMessage, setStreamingMessage] = useState('');
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -78,15 +80,32 @@ const Chat = () => {
 
   useEffect(() => {
     // Only scroll to bottom when new messages are added (not on initial load)
-    if ((messages.length > 1 && !loading) || isBotTyping) {
+    if ((messages.length > 1 && !loading) || isBotTyping || isStreaming) {
       scrollToBottom();
     }
-  }, [messages.length, loading, isBotTyping]);
+  }, [messages.length, loading, isBotTyping, isStreaming, streamingMessage]);
 
+  const streamText = (text: string, callback: (complete: string) => void) => {
+    setIsStreaming(true);
+    setStreamingMessage('');
+    let currentIndex = 0;
+    
+    const streamInterval = setInterval(() => {
+      if (currentIndex < text.length) {
+        setStreamingMessage(text.substring(0, currentIndex + 1));
+        currentIndex++;
+      } else {
+        clearInterval(streamInterval);
+        setIsStreaming(false);
+        setStreamingMessage('');
+        callback(text);
+      }
+    }, 25);
+  };
   const handleSendMessage = async () => {
     if (!user) return;
     
-    if (!inputMessage.trim() || sending || isBotTyping) return;
+    if (!inputMessage.trim() || sending || isBotTyping || isStreaming) return;
 
     const messageText = inputMessage.trim();
     setInputMessage('');
@@ -120,26 +139,32 @@ const Chat = () => {
       // Get AI response
       const botResponseText = await getChatResponse(updatedHistory);
       
+      // Stop typing indicator and start streaming
+      setIsBotTyping(false);
+      
       // Add bot response to conversation history
       const newBotMessage: OpenAIChatMessage = { role: 'assistant', content: botResponseText };
       setConversationHistory([...updatedHistory, newBotMessage]);
       
-      // Save bot response to database
-      const { data: botMessageData, error: botError } = await supabase
-        .from('chat_messages')
-        .insert({
-          user_id: user.id,
-          message: botResponseText,
-          sender: 'bot',
-          response: ''
-        })
-        .select()
-        .single();
+      // Stream the bot response
+      streamText(botResponseText, async (completeText) => {
+        // Save bot response to database after streaming is complete
+        const { data: botMessageData, error: botError } = await supabase
+          .from('chat_messages')
+          .insert({
+            user_id: user.id,
+            message: completeText,
+            sender: 'bot',
+            response: ''
+          })
+          .select()
+          .single();
 
-      if (botError) throw botError;
+        if (botError) throw botError;
 
-      // Add bot response to messages
-      setMessages(prev => [...prev, botMessageData]);
+        // Add bot response to messages
+        setMessages(prev => [...prev, botMessageData]);
+      });
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send message');
@@ -150,6 +175,8 @@ const Chat = () => {
     } finally {
       setSending(false);
       setIsBotTyping(false);
+      setIsStreaming(false);
+      setStreamingMessage('');
     }
   };
 
@@ -237,13 +264,34 @@ const Chat = () => {
                 
                 {/* Typing Indicator */}
                 <div className="bg-app-light rounded-2xl px-3 py-2">
-                  <div className="flex items-center gap-1">
-                    <span className="text-app-muted text-sm">MindEase Bot is typing</span>
+                  <div className="flex items-center gap-2">
                     <div className="flex gap-1">
-                      <div className="w-1 h-1 bg-app-muted rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                      <div className="w-1 h-1 bg-app-muted rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                      <div className="w-1 h-1 bg-app-muted rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                      <div className="w-2 h-2 bg-app-muted rounded-full animate-pulse" style={{ animationDelay: '0ms', animationDuration: '1.5s' }}></div>
+                      <div className="w-2 h-2 bg-app-muted rounded-full animate-pulse" style={{ animationDelay: '200ms', animationDuration: '1.5s' }}></div>
+                      <div className="w-2 h-2 bg-app-muted rounded-full animate-pulse" style={{ animationDelay: '400ms', animationDuration: '1.5s' }}></div>
                     </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Streaming Bot Response */}
+          {isStreaming && (
+            <div className="flex justify-start">
+              <div className="flex items-start gap-2 max-w-[85%]">
+                {/* Bot Avatar */}
+                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-warning/20">
+                  <div className="w-4 h-4 bg-warning rounded-full flex items-center justify-center">
+                    <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                  </div>
+                </div>
+                
+                {/* Streaming Message */}
+                <div className="bg-app-light text-app rounded-2xl px-3 py-2">
+                  <div className="text-sm leading-relaxed prose prose-sm prose-slate dark:prose-invert max-w-none">
+                    <ReactMarkdown>{streamingMessage}</ReactMarkdown>
+                    <span className="inline-block w-2 h-4 bg-primary animate-pulse ml-1"></span>
                   </div>
                 </div>
               </div>
@@ -266,15 +314,15 @@ const Chat = () => {
                 onKeyPress={handleKeyPress}
                 placeholder="Type a message..."
                 className="w-full px-3 py-2 bg-app-dark text-app placeholder-app-muted rounded-full border-none outline-none text-sm transition-colors duration-200 focus:ring-2 focus:ring-primary shadow-sm"
-                disabled={sending || loading || isBotTyping}
+                disabled={sending || loading || isBotTyping || isStreaming}
               />
             </div>
             <button 
               onClick={handleSendMessage}
-              disabled={sending || loading || isBotTyping || !inputMessage.trim()}
+              disabled={sending || loading || isBotTyping || isStreaming || !inputMessage.trim()}
               className="p-2 text-app-muted hover:text-primary hover:bg-primary/10 rounded-full transition-all duration-200 active:scale-95 disabled:opacity-50"
             >
-              {sending || isBotTyping ? (
+              {sending || isBotTyping || isStreaming ? (
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
               ) : (
                 <Send size={20} />

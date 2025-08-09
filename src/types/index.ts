@@ -21,6 +21,7 @@ export interface JournalEntry {
   mood?: 'happy' | 'sad' | 'neutral' | 'angry';
   created_at: string;
   updated_at: string;
+  is_favorite?: boolean;
 }
 
 export interface ChatMessage {

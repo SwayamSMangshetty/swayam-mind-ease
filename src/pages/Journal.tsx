@@ -4,8 +4,10 @@ import { Plus, Search, Calendar, Filter, MoreVertical, Heart, Download, Trash2 }
 import NewEntryModal from '../components/Journal/NewEntryModal';
 import ViewEntryModal from '../components/Journal/ViewEntryModal';
 import EditEntryModal from '../components/Journal/EditEntryModal';
+import DeleteEntryModal from '../components/Journal/DeleteEntryModal';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import { JournalEntry } from '../types';
 
 const Journal = () => {
@@ -22,19 +24,13 @@ const Journal = () => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showMoodFilter, setShowMoodFilter] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-  const [favoriteEntries, setFavoriteEntries] = useState<Set<string>>(new Set());
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [entryToDelete, setEntryToDelete] = useState<JournalEntry | null>(null);
+  const [deletingEntry, setDeletingEntry] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { showSuccess, showError: showToastError } = useToast();
 
-  // Load favorite entries from localStorage
-  useEffect(() => {
-    const storedFavorites = localStorage.getItem('favoriteEntries');
-    if (storedFavorites) {
-      setFavoriteEntries(new Set(JSON.parse(storedFavorites)));
-    }
-  }, []);
   const fetchJournalEntries = async () => {
     if (!user) return;
     
@@ -42,7 +38,7 @@ const Journal = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from('journal_entries')
-        .select('*')
+        .select('*, is_favorite')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
@@ -167,50 +163,76 @@ const Journal = () => {
   };
 
   const exportEntry = (entry: JournalEntry) => {
-    const csvContent = [
-      ['Title', 'Content', 'Mood', 'Created Date', 'Updated Date'],
-      [
-        entry.title,
-        entry.content.replace(/"/g, '""'),
-        entry.mood || '',
-        new Date(entry.created_at).toLocaleString(),
-        new Date(entry.updated_at).toLocaleString()
-      ]
-    ].map(row => row.map(field => `"${field}"`).join(',')).join('\n');
+    try {
+      const csvContent = [
+        ['Title', 'Content', 'Mood', 'CreatedAt', 'UpdatedAt'],
+        [
+          entry.title || 'Untitled',
+          entry.content.replace(/"/g, '""'),
+          entry.mood || '',
+          new Date(entry.created_at).toLocaleString(),
+          new Date(entry.updated_at).toLocaleString()
+        ]
+      ].map(row => row.map(field => `"${field}"`).join(',')).join('\n');
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `journal-entry-${entry.id}-${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `journal_${entry.id}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setActiveDropdown(null);
+      showSuccess('Entry Exported', 'Your journal entry has been downloaded as CSV.');
+    } catch (err) {
+      showToastError('Export Failed', 'There was an error exporting your entry.');
+    }
   };
 
-  const toggleFavorite = (entryId: string) => {
-    const newFavorites = new Set(favoriteEntries);
-    if (favoriteEntries.has(entryId)) {
-      newFavorites.delete(entryId);
-    } else {
-      newFavorites.add(entryId);
+  const toggleFavorite = async (entry: JournalEntry) => {
+    if (!user) return;
+    
+    try {
+      const newFavoriteStatus = !entry.is_favorite;
+      
+      const { error } = await supabase
+        .from('journal_entries')
+        .update({ is_favorite: newFavoriteStatus })
+        .eq('id', entry.id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setJournalEntries(prev => 
+        prev.map(e => 
+          e.id === entry.id ? { ...e, is_favorite: newFavoriteStatus } : e
+        )
+      );
+      
+      showSuccess(
+        newFavoriteStatus ? 'Added to Favorites' : 'Removed from Favorites',
+        `"${entry.title || 'Untitled'}" has been ${newFavoriteStatus ? 'favorited' : 'unfavorited'}.`
+      );
+    } catch (err) {
+      showToastError('Update Failed', 'There was an error updating the favorite status.');
     }
-    setFavoriteEntries(newFavorites);
-    localStorage.setItem('favoriteEntries', JSON.stringify([...newFavorites]));
     setActiveDropdown(null);
   };
 
   const handleDeleteClick = (entry: JournalEntry) => {
     setEntryToDelete(entry);
-    setShowDeleteDialog(true);
+    setShowDeleteModal(true);
     setActiveDropdown(null);
   };
 
-  const confirmDelete = async () => {
+  const handleConfirmDelete = async () => {
     if (!entryToDelete || !user) return;
 
     try {
+      setDeletingEntry(true);
       const { error } = await supabase
         .from('journal_entries')
         .delete()
@@ -219,22 +241,19 @@ const Journal = () => {
 
       if (error) throw error;
 
-      // Remove from favorites if it was favorited
-      const newFavorites = new Set(favoriteEntries);
-      newFavorites.delete(entryToDelete.id);
-      setFavoriteEntries(newFavorites);
-      localStorage.setItem('favoriteEntries', JSON.stringify([...newFavorites]));
-
       fetchJournalEntries();
-      setShowDeleteDialog(false);
+      setShowDeleteModal(false);
       setEntryToDelete(null);
+      showSuccess('Entry Deleted', 'Your journal entry has been permanently deleted.');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete entry');
+      showToastError('Delete Failed', 'There was an error deleting your entry.');
+    } finally {
+      setDeletingEntry(false);
     }
   };
 
-  const cancelDelete = () => {
-    setShowDeleteDialog(false);
+  const handleCancelDelete = () => {
+    setShowDeleteModal(false);
     setEntryToDelete(null);
   };
 
@@ -400,13 +419,13 @@ const Journal = () => {
               >
                 <div onClick={() => handleEntryClick(entry)}>
                   <div className="flex items-start justify-between mb-1">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-app mb-1 text-sm truncate transition-colors duration-200">{entry.title || 'Untitled'}</h3>
-                      {favoriteEntries.has(entry.id) && (
+                    <div className="flex items-center min-w-0 flex-1">
+                      {entry.is_favorite && (
                         <Heart size={12} className="text-danger fill-current ml-2 flex-shrink-0" />
                       )}
+                      <h3 className="font-semibold text-app mb-1 text-sm truncate transition-colors duration-200 ml-2">{entry.title || 'Untitled'}</h3>
                     </div>
-                    <div className="flex items-center gap-1 ml-2">
+                    <div className="flex items-center gap-3 ml-2">
                       <div className={`w-3 h-3 rounded-full flex-shrink-0 ${
                         entry.mood === 'happy' ? 'bg-success' :
                         entry.mood === 'neutral' ? 'bg-warning' : 
@@ -429,18 +448,17 @@ const Journal = () => {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                toggleFavorite(entry.id);
+                                toggleFavorite(entry);
                               }}
                               className="w-full text-left px-3 py-2 text-sm hover:bg-app-dark transition-colors duration-200 first:rounded-t-lg flex items-center gap-2"
                             >
-                              <Heart size={14} className={favoriteEntries.has(entry.id) ? 'text-danger fill-current' : 'text-app-muted'} />
-                              {favoriteEntries.has(entry.id) ? 'Unfavorite' : 'Favorite'}
+                              <Heart size={14} className={entry.is_favorite ? 'text-danger fill-current' : 'text-app-muted'} />
+                              {entry.is_favorite ? 'Unfavorite' : 'Favorite'}
                             </button>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 exportEntry(entry);
-                                setActiveDropdown(null);
                               }}
                               className="w-full text-left px-3 py-2 text-sm hover:bg-app-dark transition-colors duration-200 flex items-center gap-2"
                             >
@@ -485,30 +503,14 @@ const Journal = () => {
         </div>
       </div>
 
-      {/* Delete Confirmation Dialog */}
-      {showDeleteDialog && entryToDelete && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-app-light rounded-2xl p-6 w-full max-w-sm shadow-xl">
-            <h3 className="text-lg font-semibold text-app mb-3">Delete Entry</h3>
-            <p className="text-app-muted text-sm mb-6">
-              Are you sure you want to delete "{entryToDelete.title || 'Untitled'}"? This action cannot be undone.
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={cancelDelete}
-                className="flex-1 py-2 px-4 bg-app-dark text-app rounded-lg hover:bg-app-dark/80 transition-all duration-200"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmDelete}
-                className="flex-1 py-2 px-4 bg-danger text-white rounded-lg hover:bg-danger/90 transition-all duration-200"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* Delete Entry Modal */}
+      {showDeleteModal && entryToDelete && (
+        <DeleteEntryModal
+          entry={entryToDelete}
+          onClose={handleCancelDelete}
+          onConfirm={handleConfirmDelete}
+          deleting={deletingEntry}
+        />
       )}
 
       {/* Backdrop for dropdowns */}
