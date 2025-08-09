@@ -452,7 +452,7 @@ const Journal = () => {
                                 e.stopPropagation();
                                 handleDeleteClick(entry);
                               }}
-                              className="w-full text-left px-3 py-2 text-sm hover:bg-app-dark transition-colors duration-200 last:rounded-b-lg flex items-center gap-2 text-danger"
+                              className="w-full text-left px-3 py-2 text-sm hover:bg-danger/10 transition-colors duration-200 last:rounded-b-lg flex items-center gap-2 text-danger"
                             >
                               <Trash2 size={14} className="text-danger" />
                               Delete

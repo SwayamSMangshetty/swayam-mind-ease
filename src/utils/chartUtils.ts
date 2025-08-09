@@ -11,10 +11,10 @@ export const moodValues: { [key: string]: number } = {
 
 export interface ChartDataPoint {
   label: string;
-  value: number | null;
+  value: number;
 }
 
-// Generate SVG path for curved line, handling null values
+// Generate SVG path for curved line
 export const generatePath = (data: ChartDataPoint[], width: number, height: number): string => {
   const maxValue = 10;
   const stepX = width / (data.length - 1);
@@ -23,7 +23,7 @@ export const generatePath = (data: ChartDataPoint[], width: number, height: numb
   
   data.forEach((point, index) => {
     const x = index * stepX;
-    const y = height - ((point.value || 6) / maxValue) * height;
+    const y = height - (point.value / maxValue) * height;
     
     if (index === 0) {
       path += `M ${x} ${y}`;
@@ -35,7 +35,7 @@ export const generatePath = (data: ChartDataPoint[], width: number, height: numb
   return path;
 };
 
-// Generate filled path for area chart, handling null values
+// Generate filled path for area chart
 export const generateFilledPath = (data: ChartDataPoint[], width: number, height: number): string => {
   const maxValue = 10;
   const stepX = width / (data.length - 1);
@@ -46,7 +46,7 @@ export const generateFilledPath = (data: ChartDataPoint[], width: number, height
   
   data.forEach((point, index) => {
     const x = index * stepX;
-    const y = height - ((point.value || 6) / maxValue) * height;
+    const y = height - (point.value / maxValue) * height;
     path += ` L ${x} ${y}`;
   });
   
@@ -58,7 +58,7 @@ export const generateFilledPath = (data: ChartDataPoint[], width: number, height
 
 // Calculate insights from mood data
 export const calculateInsights = (data: ChartDataPoint[], period: string) => {
-  const validData = data.filter(point => point.value !== null);
+  const validData = data.filter(point => point.value > 0);
   
   if (validData.length === 0) {
     return {
@@ -68,12 +68,12 @@ export const calculateInsights = (data: ChartDataPoint[], period: string) => {
     };
   }
   
-  const average = validData.reduce((sum, point) => sum + point.value!, 0) / validData.length;
+  const average = validData.reduce((sum, point) => sum + point.value, 0) / validData.length;
   const bestPoint = validData.reduce((best, current) => 
-    current.value! > best.value! ? current : best
+    current.value > best.value ? current : best
   );
   const worstPoint = validData.reduce((worst, current) => 
-    current.value! < worst.value! ? current : worst
+    current.value < worst.value ? current : worst
   );
   
   let overallMessage = '';

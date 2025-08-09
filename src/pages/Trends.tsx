@@ -97,21 +97,17 @@ const Trends = () => {
       
       const now = new Date();
       let startDate: Date;
-      let labels: string[] = [];
       
       // Calculate date range and labels based on period
       if (period === 'Week') {
         startDate = new Date(now);
         startDate.setDate(startDate.getDate() - 7);
-        labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
       } else if (period === 'Month') {
         startDate = new Date(now);
         startDate.setDate(startDate.getDate() - 30);
-        labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
       } else { // Year
         startDate = new Date(now);
         startDate.setFullYear(startDate.getFullYear() - 1);
-        labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
       }
       
       // Fetch mood entries from database
@@ -128,30 +124,35 @@ const Trends = () => {
       const processedData: ChartDataPoint[] = [];
       
       if (period === 'Week') {
-        // Group by day of week
-        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        // Get last 7 calendar days ending today (rolling 7-day)
+        const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
         for (let i = 0; i < 7; i++) {
           const targetDate = new Date(now);
           targetDate.setDate(targetDate.getDate() - (6 - i));
+          
+          // Get the actual day name for this specific date
+          const dayOfWeek = targetDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
+          const dayLabel = dayLabels[dayOfWeek];
           
           const dayEntries = data?.filter(entry => {
             const entryDate = new Date(entry.created_at);
             return entryDate.toDateString() === targetDate.toDateString();
           }) || [];
           
-          let value: number | null = null;
+          let value = 6; // Default to neutral (6) instead of null
           if (dayEntries.length > 0) {
             const sum = dayEntries.reduce((acc, entry) => acc + (moodValues[entry.mood] || 6), 0);
             value = sum / dayEntries.length;
           }
           
           processedData.push({
-            label: labels[i],
-            value: value !== null ? value : 6
+            label: dayLabel,
+            value: value
           });
         }
       } else if (period === 'Month') {
         // Group by weeks
+        const labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
         for (let week = 0; week < 4; week++) {
           const weekStart = new Date(now);
           weekStart.setDate(weekStart.getDate() - (28 - week * 7));
@@ -176,6 +177,7 @@ const Trends = () => {
         }
       } else { // Year
         // Group by months
+        const labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         for (let month = 0; month < 12; month++) {
           const monthStart = new Date(now.getFullYear(), month, 1);
           const monthEnd = new Date(now.getFullYear(), month + 1, 0);
